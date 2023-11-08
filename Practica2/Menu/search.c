@@ -2,7 +2,7 @@
 * Created by roberto on 3/5/21.
 */
 #include "search.h"
-void    results_search(char * from, char *to,
+void    results_search(char * from, char *to, char *date,
                        int * n_choices, char *** choices,
                        int max_length,
                        int max_rows)
@@ -10,6 +10,7 @@ void    results_search(char * from, char *to,
  *
  * @param from form field from
  * @param to form field to
+ * @param date form field date
  * @param n_choices fill this with the number of results
  * @param choices fill this with the actual results
  * @param max_length output win maximum width
