@@ -1,0 +1,4 @@
+1. Recibir fecha usando formato YYYY-MM-DD
+2. Crear query para vuelos directos
+3. Aplicar query usando odbc, prepared statements
+

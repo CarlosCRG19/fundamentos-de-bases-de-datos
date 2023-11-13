@@ -1,0 +1,13 @@
+departureAirport = a 
+arrivalAirport = c 
+departureDate = dd
+
+-- Lista con vuelos directos entre a y c
+
+SELECT a1.airport_code AS departure_airport, a2.airport_code AS arrival_airport, scheduled_departure, scheduled_arrival
+FROM flights
+JOIN airports_data a1 ON departure_airport = a1.airport_code
+JOIN airports_data a2 ON arrival_airport = a2.airport_code
+WHERE departure_airport = a AND
+      arrival_airport = c AND 
+      scheduled_departure = dd;

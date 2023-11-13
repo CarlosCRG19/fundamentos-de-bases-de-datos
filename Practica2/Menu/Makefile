@@ -6,7 +6,7 @@ LDLIBS = -lodbc -lcurses -lpanel -lmenu -lform
 HEADERS = odbc.h bpass.h  lmenu.h search.h windows.h loop.h
 
 EXE = menu
-OBJ = $(EXE).o bpass.o   loop.o  search.o windows.o
+OBJ = $(EXE).o bpass.o odbc.o loop.o  search.o windows.o
 
 all : $(EXE)
 
