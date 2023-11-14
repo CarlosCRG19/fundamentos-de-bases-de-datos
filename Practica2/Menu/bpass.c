@@ -4,6 +4,7 @@
 #include <sql.h>
 #include <sqlext.h>
 #include <sqlucode.h>
+#include <stdio.h>
 #include "lbpass.h"
 #include "odbc.h"
 #include "utils.h"
@@ -12,14 +13,14 @@ void    results_bpass(char * bookID,
                        int * n_choices, char *** choices,
                        int max_length,
                        int max_rows,
-                       char **errMsg)
+                       char *errMsg)
 /**here you need to do your query and fill the choices array of strings
 *
 * @param bookID  form field bookId
 * @param n_choices fill this with the number of results
 * @param choices fill this with the actual results
 * @param max_length output win maximum width
-* @param max_rows output win maximum number of rows
+* @param max_is output win maximum number of rows
 */
 
 {
@@ -27,27 +28,33 @@ void    results_bpass(char * bookID,
     SQLHDBC dbc;
     SQLHSTMT stmt;
     SQLRETURN ret; /* ODBC API return status */
+    SQLCHAR passenger_name[32];
+    SQLCHAR flight_id[32];
+    SQLCHAR scheduled_departure[64];
+    SQLCHAR seat_no[64];
+    char query[4000];
+    char result[512];
+    int i = 0; /* Counter for created boarding passess */
 
-    if (is_empty(bookID)) {
-        write_error(errMsg, "`book_ref` cannot be empty");
+    trim_trailing(bookID); /* Remove white spaces from `bookID` */
+
+    if (strlen(bookID) == 0) {
+        sprintf(errMsg, "`book Id` cannot be empty");
         return;
-    }
-
-    if (!is_empty(*errMsg)) {
-        free(*errMsg);
     }
 
     /* CONNECT */
     ret = odbc_connect(&env, &dbc);
     if (!SQL_SUCCEEDED(ret)) {
-        return; /* TODO: add error handling */
+        sprintf(errMsg, "could not connect to database");
+        return;
     }
 
     /* Allocate a statement handle */
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
 
     /* SQL statement to execute the DO block with parameters */
-    const char *createMissingBoardingPassesBlockSQL = "DO $$ \
+    sprintf(query, "DO $$ \
         DECLARE \
             ticket_flight_without_boarding_pass RECORD; \
             available_seat_no CHAR VARYING(4); \
@@ -56,7 +63,7 @@ void    results_bpass(char * bookID,
             IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'results') THEN \
                 DROP TABLE results; \
             END IF; \
-            CREATE TEMPORARY TABLE results ( \
+            CREATE TABLE results ( \
                 passenger_name TEXT, \
                 flight_id INT, \
                 scheduled_departure TIMESTAMP WITH TIME ZONE, \
@@ -73,7 +80,7 @@ void    results_bpass(char * bookID,
                     LEFT JOIN boarding_passes bp \
                     ON bp.flight_id = tf.flight_id AND bp.ticket_no = tf.ticket_no \
                 WHERE \
-                    bp.flight_id IS NULL AND bp.ticket_no IS NULL AND t.book_ref = ? \
+                    bp.flight_id IS NULL AND bp.ticket_no IS NULL AND t.book_ref = '%s' \
                 ORDER BY tf.ticket_no ASC \
             ) LOOP \
                 SELECT s.seat_no \
@@ -118,40 +125,48 @@ void    results_bpass(char * bookID,
                     LIMIT 1; \
             END LOOP; \
         END; \
-        $$; \
-        SELECT * FROM results;";
+        $$;", bookID);
 
-    /* Query preparation */
-    SQLPrepare(stmt, (SQLCHAR *)createMissingBoardingPassesBlockSQL, SQL_NTS);
-    SQLBindParameter(stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, sizeof(bookID), 0, (SQLCHAR*)bookID, sizeof(bookID), NULL);
+    ret = SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
 
-    SQLExecute(stmt);
+    sprintf(query, "SELECT * from results");
 
-    int i = 0;
+    ret = SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
 
-    /* Loop through the rows in the result-set */
-    while (SQL_SUCCEEDED(ret = SQLFetch(stmt)) && i < max_rows) {
-        SQLCHAR passenger_name[256];
-        SQLINTEGER flight_id;
-        SQL_TIMESTAMP_STRUCT scheduled_departure;
-        SQLCHAR seat_no[5];
-        char * result;
+    SQLBindCol(stmt, 1, SQL_C_CHAR, passenger_name, sizeof(passenger_name), NULL);
+    SQLBindCol(stmt, 2, SQL_C_CHAR, flight_id, sizeof(flight_id), NULL);
+    SQLBindCol(stmt, 3, SQL_C_CHAR, scheduled_departure, sizeof(scheduled_departure), NULL);
+    SQLBindCol(stmt, 4, SQL_C_CHAR, seat_no, sizeof(seat_no), NULL);
 
-        /* Bind the result set columns */
-        SQLBindCol(stmt, 1, SQL_C_CHAR, passenger_name, sizeof(passenger_name), NULL);
-        SQLBindCol(stmt, 2, SQL_C_LONG, &flight_id, 0, NULL);
-        SQLBindCol(stmt, 3, SQL_C_TIMESTAMP, &scheduled_departure, sizeof(scheduled_departure), NULL);
-        SQLBindCol(stmt, 4, SQL_C_CHAR, seat_no, sizeof(seat_no), NULL);
+    /* Fetch and process the results */
+    while (SQL_SUCCEEDED(ret = SQLFetch(stmt))) {
+        if (i < max_rows) {
+            /* Allocate memory for the current i */
+            (*choices)[i] = (char*)malloc(max_length * sizeof(char));
 
-        snprintf(result, max_length, "Passenger Name: %s, Flight ID: %d, Seat No: %s\n", passenger_name, flight_id, seat_no);
+            if ((*choices)[i] == NULL) {
+                break;
+            }
 
-        write_choice(result, choices, i, max_length);
+            passenger_name[20] = '\0'; /* truncate the passenger name */
 
-        i++;
+            /* Capture and format result */
+            sprintf(result, "(%d) PN: %s, FID: %s, SD: %s, SNO: %s", i+1, passenger_name, flight_id, scheduled_departure, seat_no);
+
+            /* Use proper indexing and dereferencing for choices */
+            write_choice(result, choices, i, max_length);
+            i++;
+        }
     }
 
-    max_rows = MIN(*n_choices, max_rows);
     SQLCloseCursor(stmt);
+
+    /* Update the number of choices */
+    *n_choices = i;
+
+    if (i == 0) {
+        sprintf(errMsg, "booking already has all boarding passes");
+    }
 
     /* free up statement handle */
     SQLFreeHandle(SQL_HANDLE_STMT, stmt);

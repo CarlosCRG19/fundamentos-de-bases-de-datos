@@ -15,5 +15,7 @@ void write_choice(char * choice, char ***choices, int choice_index, int max_leng
 
 void write_error(char **errMsg, char *newErrMsg);
 
+void trim_trailing(char * str);
+
 
 #endif /*NCOURSES_UTILS_H*/

@@ -1,109 +1,44 @@
-/*
-* Created by roberto on 3/5/21.
-*/
-#include <stdlib.h>
-#include <stdio.h>
-#include <sql.h>
-#include <sqlext.h>
-#include "odbc.h"
 #include "search.h"
-#include "utils.h"
 
-#define MAX_ERROR_LENGTH 256
+void results_search(char * from, char * to, char * date, int * n_choices,
+                    char *** choices, int max_length, int max_rows)
+   /**here you need to do your query and fill the choices array of strings
+ *
+ * @param from form field from
+ * @param to form field to
+ * @param n_choices fill this with the number of results
+ * @param choices fill this with the actual results
+ * @param max_length output win maximum width
+ * @param max_rows output win maximum number of rows
+  */
+{
+    int i=0;
+    int t=0;
+    /* 10 commandments from King Jorge Bible */
+    char *query_result_set[]={
+            "1. Thou shalt have no other gods before me.",
+            "2. Thou shalt not make unto thee any graven image,"
+            " or any likeness of any thing that is in heaven above,"
+            " or that is in the earth beneath, or that is in the water "
+            "under the earth.",
+            "3. Remember the sabbath day, to keep it holy.",
+            "4. Thou shalt not take the name of the Lord thy God in vain.",
+            "5. Honour thy father and thy mother.",
+            "6. Thou shalt not kill.",
+            "7. Thou shalt not commit adultery.",
+            "8. Thou shalt not steal.",
+            "9. Thou shalt not bear false witness against thy neighbor.",
+            "10. Thou shalt not covet thy neighbour's house, thou shalt not"
+            " covet thy neighbour's wife, nor his manservant, "
+            "nor his maidservant, nor his ox, nor his ass, "
+            "nor any thing that is thy neighbour's."
+    };
+    *n_choices = sizeof(query_result_set) / sizeof(query_result_set[0]);
 
-
-void handle_error(int *n_choices, char ***choices, const char *error_message) {
-    *n_choices = 1;
-    *choices = malloc(sizeof(char *));
-    (*choices)[0] = malloc(MAX_ERROR_LENGTH * sizeof(char));
-    snprintf((*choices)[0], MAX_ERROR_LENGTH, "ERROR: %s", error_message);
-}
-
-void free_choices(char ***choices, int n_choices) {
-    int i;
-    for (i = 0; i < n_choices; i++) {
-        free((*choices)[i]);
-    }
-    free(*choices);
-}
-
-void results_search(char *from, char *to, char *date,
-                    int *n_choices, char ***choices,
-                    int max_length, int max_rows) {
-    if (*n_choices > 0) {
-        free_choices(choices, *n_choices);
-        *n_choices = 0;
-    }
-
-    if (is_empty(from) || is_empty(to) || is_empty(date)) {
-        char missing_fields[MAX_ERROR_LENGTH];
-        snprintf(missing_fields, sizeof(missing_fields), "missing fields %s%s%s",
-                 (is_empty(from) ? "from" : ""),
-                 (is_empty(to) ? (is_empty(from) ? ", to" : "to") : ""),
-                 (is_empty(date) ? (is_empty(from) || is_empty(to) ? ", date" : "date") : ""));
-
-        handle_error(n_choices, choices, missing_fields);
-        return;
-    }
-
-    SQLHENV env;
-    SQLHDBC dbc;
-    SQLHSTMT stmt;
-    SQLRETURN ret; /* ODBC API return status */
-
-    /* CONNECT */
-    ret = odbc_connect(&env, &dbc);
-    if (!SQL_SUCCEEDED(ret)) {
-        handle_error(n_choices, choices, "could not connect to database");
-        return;
-    }
-
-    /* Allocate a statement handle */
-    SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
-
-    char query[512];
-    snprintf(query, sizeof(query), "SELECT a1.airport_code AS departure_airport, "
-                                   "a2.airport_code AS arrival_airport, scheduled_departure, scheduled_arrival "
-                                   "FROM flights "
-                                   "JOIN airports_data a1 ON departure_airport = a1.airport_code "
-                                   "JOIN airports_data a2 ON arrival_airport = a2.airport_code "
-                                   "WHERE departure_airport = '%s' AND arrival_airport = '%s' AND DATE(scheduled_departure) = '%s';",
-             from, to, date);
-
-    /* Execute the SQL query */
-    ret = SQLExecDirect(stmt, (SQLCHAR *)query, SQL_NTS);
-
-    if (SQL_SUCCEEDED(ret)) {
-        SQLCHAR departure[64], arrival[64], scheduledDeparture[64], scheduledArrival[64];
-
-        SQLBindCol(stmt, 1, SQL_C_CHAR, departure, sizeof(departure), NULL);
-        SQLBindCol(stmt, 2, SQL_C_CHAR, arrival, sizeof(arrival), NULL);
-        SQLBindCol(stmt, 3, SQL_C_CHAR, scheduledDeparture, sizeof(scheduledDeparture), NULL);
-        SQLBindCol(stmt, 4, SQL_C_CHAR, scheduledArrival, sizeof(scheduledArrival), NULL);
-
-        int i = 0;
-
-        /* Loop through the rows in the result-set */
-        while (SQL_SUCCEEDED(ret = SQLFetch(stmt)) && i < max_rows) {
-            (*choices)[i] = malloc(max_length * sizeof(char));
-            snprintf((*choices)[i], max_length, "Departure: %s, Arrival: %s, Scheduled Departure: %s, Scheduled Arrival: %s",
-                     departure, arrival, scheduledDeparture, scheduledArrival);
-            i++;
-        }
-
-        *n_choices = i;
-    } else {
-        handle_error(n_choices, choices, "query execution failed");
-    }
-
-    /* Free up statement handle */
-    SQLFreeHandle(SQL_HANDLE_STMT, stmt);
-
-    /* Disconnect from the database */
-    ret = odbc_disconnect(NULL, dbc); /* Assuming odbc_disconnect does not need the environment handle */
-    if (!SQL_SUCCEEDED(ret)) {
-        handle_error(n_choices, choices, "could not disconnect from database");
-        return;
+    max_rows = MIN(*n_choices, max_rows);
+    for (i = 0 ; i < max_rows ; i++) {
+        t = strlen(query_result_set[i])+1;
+        t = MIN(t, max_length);
+        strncpy((*choices)[i], query_result_set[i], t);
     }
 }
-
