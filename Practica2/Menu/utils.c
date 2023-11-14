@@ -16,18 +16,13 @@ void write_choice(char * choice, char ***choices, int choice_index, int max_leng
 }
 
 
-void write_error(char **errMsg, char *newErrMsg) {
-    if (*errMsg != NULL) {
-        free(*errMsg);
-    }
-
-    *errMsg = (char *)malloc(strlen(newErrMsg) + 1);
-
-    if (*errMsg != NULL) {
-        strcpy(*errMsg, newErrMsg);
-    }
+void write_error(WINDOW *msg_win, char *err_msg) {
+    write_msg(msg_win, err_msg, -1, -1, "ERROR");
 }
 
+void write_success(WINDOW *msg_win, char *success_msg) {
+    write_msg(msg_win, success_msg, -1, -1, "SUCCESS");
+}
 /* Remove trailing white space characters from string */
 void trim_trailing(char * str)
 {

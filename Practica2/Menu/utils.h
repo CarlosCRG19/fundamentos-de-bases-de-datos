@@ -13,7 +13,9 @@ bool is_empty(char *str);
 
 void write_choice(char * choice, char ***choices, int choice_index, int max_length);
 
-void write_error(char **errMsg, char *newErrMsg);
+void write_error(WINDOW *msg_window, char *err_msg);
+
+void write_success(WINDOW *msg_window, char *success_msg);
 
 void trim_trailing(char * str);
 
