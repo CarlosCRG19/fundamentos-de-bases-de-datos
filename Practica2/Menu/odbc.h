@@ -1,8 +1,12 @@
 #ifndef AUX_H
 #define AUX_H
 
+#include <sql.h>
+#include <sqlext.h>
+
 /* CONNECTION PARAMETERS, ADAPT TO YOUR SCENARIO */
 #define CONNECTION_PARS "DRIVER=PostgreSQL Unicode;DATABASE=flight;SERVER=localhost;PORT=5432;UID=postgres;PWD=;"
+
 
 /* REPORT OF THE MOST RECENT ERROR USING HANDLE handle */
 void odbc_extract_error(char *fn, SQLHANDLE handle, SQLSMALLINT type);

@@ -22,6 +22,7 @@
  +-------------------------------+
 */
 #include "loop.h"
+#include "utils.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -63,6 +64,7 @@ void loop(_Windows *windows, _Menus *menus,
     char * tmpStr1= NULL; /* used to read values typed in forms */
     char * tmpStr2= NULL; /* used to read values typed in forms */
     char * tmpStr3= NULL; /* used to read values typed in forms */
+    char * errMsg= NULL; /* used to capture errors */
     int n_out_choices=0; /* number of printed lines in win_out window */
     int out_highlight = 0; /* line highlighted in win_out window */
     int rows_out_window = 0; /* size of win_out window */
@@ -237,12 +239,12 @@ void loop(_Windows *windows, _Menus *menus,
                 (void) form_driver(forms->bpass_form, REQ_VALIDATION);
                 tmpStr1 = field_buffer((forms->bpass_form_items)[1], 0);
                 results_bpass(tmpStr1, &n_out_choices, & (menus->out_win_choices),
-                              windows->cols_out_win-4, windows->rows_out_win-2);
+                              windows->cols_out_win-4, windows->rows_out_win-2, &errMsg);
                 print_out(out_win, menus->out_win_choices, n_out_choices,
                           out_highlight, windows->out_title);
-                if ((bool)DEBUG) {
-                    (void)snprintf(buffer, 128, "BOOK_REF=%zu\n",  (size_t)strlen(tmpStr1));
-                    write_msg(msg_win, buffer, -1, -1, windows->msg_title);
+
+                if (!is_empty(errMsg)) {
+                    write_msg(msg_win, errMsg, -1, -1, "ERROR");
                 }
             }
             else if ((choice == BPASS) && focus == (FOCUS_RIGHT)) {

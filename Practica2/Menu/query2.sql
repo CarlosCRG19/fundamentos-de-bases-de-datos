@@ -1,5 +1,4 @@
-DO
-$$
+DO $$
 DECLARE
     ticket_flight_without_boarding_pass RECORD;
     available_seat_no CHAR VARYING(4);

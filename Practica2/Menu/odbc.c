@@ -1,7 +1,5 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <sql.h>
-#include <sqlext.h>
 #include "odbc.h"
 
 /* REPORT OF THE MOST RECENT ERROR USING HANDLE handle */
