@@ -10,6 +10,8 @@
 #include "odbc.h"
 #include "utils.h"
 
+const char * BOOKINGS_QUERY = "SELECT 1 FROM bookings WHERE book_ref = ? LIMIT 1;";
+
 void    results_bpass(char * bookID,
                        int * n_choices, char *** choices,
                        int max_length,
@@ -54,8 +56,10 @@ void    results_bpass(char * bookID,
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
 
     /* Check if booking with such booking ID exists */
-    sprintf(query, "SELECT 1 FROM bookings WHERE book_ref = '%s' LIMIT 1;", bookID);
-    SQLExecDirect(stmt, (SQLCHAR *) query, SQL_NTS);
+
+    SQLPrepareA(stmt, (SQLCHAR *)BOOKINGS_QUERY, SQL_NTS);
+    SQLBindParameter(stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, sizeof(bookID), 0, bookID, sizeof(bookID), NULL);
+    SQLExecute(stmt);
 
     SQLRowCount(stmt, &row_count);
     SQLCloseCursor(stmt);
