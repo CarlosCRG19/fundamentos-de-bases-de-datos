@@ -1,72 +1,73 @@
+/*
+* Created by roberto on 3/5/21.
+*/
+#include "lbpass.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sql.h>
 #include <sqlext.h>
 #include "odbc.h"
+/*
+ * example 3 with queries built on-the-fly, the bad way
+ */
 
-int main(void) {
+void results_bpass(char * bookID,
+                   int * n_choices, char * choices,
+                   int max_length,
+                   int max_rows)
+{
     SQLHENV env;
     SQLHDBC dbc;
     SQLHSTMT stmt;
-    SQLRETURN ret; /* ODBC API return status */
-    char book_ref[10];  // Assuming book_ref is a string with a maximum length of 10 characters
+    SQLRETURN ret;
+    char psg[512];
+    char fid[512];
+    char sch[512];
+    char seat[512];
 
     /* CONNECT */
     ret = odbc_connect(&env, &dbc);
     if (!SQL_SUCCEEDED(ret)) {
-        return EXIT_FAILURE;
+        return;
     }
 
     /* Allocate a statement handle */
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
 
-    printf("Enter book_ref: ");
-    fflush(stdout);
+    char query[3000];
+    sprintf(query, "do $$ DECLARE new_tickets RECORD; flightX RECORD; boarding_num INT; selected_seat character varying(4); begin IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'temp_tickets') THEN DROP TABLE temp_tickets; END IF; CREATE TABLE temp_tickets AS ( SELECT passenger_name, flight_id, scheduled_departure, seat_no FROM tickets NATURAL JOIN ticket_flights NATURAL JOIN flights NATURAL JOIN boarding_passes WHERE ticket_no = '' AND flight_id = -1 ); FOR flightX IN ( SELECT tickets_book.flight_id as flights_id_no_bp, tickets_book.ticket_no as temp_ticket_no FROM (ticket_flights NATURAL JOIN tickets) as tickets_book LEFT JOIN boarding_passes ON tickets_book.ticket_no = boarding_passes.ticket_no and tickets_book.flight_id = boarding_passes.flight_id WHERE (boarding_passes.ticket_no IS NULL and boarding_passes.flight_id IS NULL) and book_ref = '%s') LOOP SELECT total_seats as empty_seat FROM ( SELECT flight_id, aircraft_code, seat_no as total_seats FROM flights NATURAL JOIN aircrafts_data NATURAL JOIN seats WHERE flight_id = flightX.flights_id_no_bp ) WHERE total_seats NOT IN ( SELECT seat_no as booked_seats FROM boarding_passes WHERE flight_id = flightX.flights_id_no_bp ) ORDER BY aircraft_code ASC, empty_seat ASC LIMIT 1 INTO selected_seat; SELECT boarding_no FROM boarding_passes WHERE flight_id = flightX.flights_id_no_bp ORDER BY boarding_no DESC LIMIT 1 INTO boarding_num; IF boarding_num IS NULL THEN INSERT INTO boarding_passes (ticket_no, flight_id, boarding_no, seat_no) VALUES (flightX.temp_ticket_no, flightX.flights_id_no_bp, 1, selected_seat); ELSE INSERT INTO boarding_passes (ticket_no, flight_id, boarding_no, seat_no) VALUES (flightX.temp_ticket_no, flightX.flights_id_no_bp, boarding_num + 1, selected_seat); END IF; INSERT INTO temp_tickets (passenger_name, flight_id, scheduled_departure, seat_no) SELECT passenger_name, flight_id, scheduled_departure, seat_no FROM tickets NATURAL JOIN ticket_flights NATURAL JOIN flights NATURAL JOIN boarding_passes WHERE ticket_no = flightX.temp_ticket_no AND flight_id = flightX.flights_id_no_bp LIMIT 1; END LOOP; end; $$;", bookID);
 
-    while (fgets(book_ref, sizeof(book_ref), stdin) != NULL) {
-        // Remove newline character from the input
-        book_ref[strcspn(book_ref, "\n")] = 0;
+    SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
 
-        if (strlen(book_ref) == 0) {
-            printf("Invalid input: book_ref cannot be empty.\n");
-        } else {
-            char query[512];
-            sprintf(query, "SELECT 1 FROM bookings WHERE book_ref = '%s';", book_ref);
-            printf("%s\n", query);
+    SQLCloseCursor(stmt);
 
-            ret = SQLExecDirect(stmt, (SQLCHAR*)query, SQL_NTS);
+    char query2[200];
+    sprintf(query2, "SELECT * FROM temp_tickets;");
 
-            if (SQL_SUCCEEDED(ret)) {
-                SQLLEN rowCount;
-                SQLRowCount(stmt, &rowCount);
+    SQLExecDirect(stmt, (SQLCHAR*) query2, SQL_NTS);
 
-                if (rowCount > 0) {
-                    printf("book_ref exists.\n");
-                } else {
-                    printf("Error: book_ref does not exist.\n");
-                }
-            } else {
-                printf("Error executing the query.\n");
-            }
+    SQLBindCol(stmt, 1, SQL_C_CHAR, psg, sizeof(psg), NULL);
+    SQLBindCol(stmt, 2, SQL_C_CHAR, fid, sizeof(fid), NULL);
+    SQLBindCol(stmt, 3, SQL_C_CHAR, sch, sizeof(sch), NULL);
+    SQLBindCol(stmt, 4, SQL_C_CHAR, seat, sizeof(seat), NULL);
 
-            SQLCloseCursor(stmt);
+    *n_choices = 0; // Reset the count
+    /* Loop through the rows in the result-set */
+    while (SQL_SUCCEEDED(ret = SQLFetch(stmt))) {
+        if (*n_choices < max_rows) {
+            // Allocate memory for each choice
+            (*choices)[*n_choices] = (char *)malloc(max_length * sizeof(char));
+            
+            // Copy data to choices array
+            snprintf((*choices)[*n_choices], max_length, "%s    | %s    | %s    | %s", psg, fid, sch, seat);
+            (*n_choices)++;
         }
-
-        printf("Enter book_ref: ");
-        fflush(stdout);
     }
 
-    printf("\n");
+    SQLCloseCursor(stmt);
 
-    /* Free up statement handle */
+    /* free up statement handle */
     SQLFreeHandle(SQL_HANDLE_STMT, stmt);
-
-    /* DISCONNECT */
-    ret = odbc_disconnect(env, dbc);
-    if (!SQL_SUCCEEDED(ret)) {
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
 }

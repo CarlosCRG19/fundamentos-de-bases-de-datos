@@ -29,14 +29,12 @@ void    results_bpass(char * bookID,
     SQLHDBC dbc;
     SQLHSTMT stmt;
     SQLRETURN ret; /* ODBC API return status */
-    SQLCHAR passenger_name[32];
-    SQLCHAR flight_id[32];
-    SQLCHAR scheduled_departure[64];
-    SQLCHAR seat_no[64];
+
+    SQLCHAR passenger_name[32], flight_id[32], scheduled_departure[64], seat_no[64];
     SQLLEN row_count;
+
     char query[4000];
     char result[512];
-    int i = 0; /* Counter for created boarding passess */
 
     trim_trailing(bookID); /* Remove white spaces from `bookID` */
 
@@ -55,14 +53,14 @@ void    results_bpass(char * bookID,
     /* Allocate a statement handle */
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
 
+    /* Check if booking with such booking ID exists */
     sprintf(query, "SELECT 1 FROM bookings WHERE book_ref = '%s' LIMIT 1;", bookID);
-    ret = SQLExecDirect(stmt, (SQLCHAR *) query, SQL_NTS);
+    SQLExecDirect(stmt, (SQLCHAR *) query, SQL_NTS);
 
     SQLRowCount(stmt, &row_count);
+    SQLCloseCursor(stmt);
 
     if (row_count > 0) {
-        SQLCloseCursor(stmt);
-
         /* SQL statement to execute the DO block with parameters */
         sprintf(query, "DO $$ \
             DECLARE \
@@ -136,12 +134,12 @@ void    results_bpass(char * bookID,
                 END LOOP; \
             END; \
             $$;", bookID);
-
-        ret = SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
+        SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
+        SQLCloseCursor(stmt);
 
         sprintf(query, "SELECT * from results");
 
-        ret = SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
+        SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
 
         SQLBindCol(stmt, 1, SQL_C_CHAR, passenger_name, sizeof(passenger_name), NULL);
         SQLBindCol(stmt, 2, SQL_C_CHAR, flight_id, sizeof(flight_id), NULL);
@@ -149,32 +147,26 @@ void    results_bpass(char * bookID,
         SQLBindCol(stmt, 4, SQL_C_CHAR, seat_no, sizeof(seat_no), NULL);
 
         /* Fetch and process the results */
+        *n_choices = 0;
         while (SQL_SUCCEEDED(ret = SQLFetch(stmt))) {
-            if (i < max_rows) {
-                /* Allocate memory for the current i */
-                (*choices)[i] = (char*)malloc(max_length * sizeof(char));
-
-                if ((*choices)[i] == NULL) {
-                    break;
-                }
+            if (*n_choices < max_rows) {
+                /* Allocate memory for the current choice */
+                (*choices)[*n_choices] = (char*)malloc(max_length * sizeof(char));
 
                 passenger_name[20] = '\0'; /* truncate the passenger name */
 
                 /* Capture and format result */
-                sprintf(result, "(%d) PN: %s, FID: %s, SD: %s, SNO: %s", i+1, passenger_name, flight_id, scheduled_departure, seat_no);
+                sprintf(result, "(%d) PN: %s, FID: %s, SD: %s, SNO: %s", (*n_choices)+1, passenger_name, flight_id, scheduled_departure, seat_no);
 
                 /* Use proper indexing and dereferencing for choices */
-                write_choice(result, choices, i, max_length);
-                i++;
+                write_choice(result, choices, (*n_choices), max_length);
+                (*n_choices)++;
             }
         }
 
         SQLCloseCursor(stmt);
 
-        /* Update the number of choices */
-        *n_choices = i;
-
-        if (i == 0) {
+        if (*n_choices == 0) {
             write_error(msg_win, "booking already has all boarding passes");
         } else {
             write_success(msg_win, "PN: Passenger Name, FID: Flight ID, SD: Scheduled Departure, SNO: Seat No");
