@@ -1,7 +1,11 @@
 /*
 * Created by roberto on 3/5/21.
 */
+#include <sqlext.h>
 #include "lbpass.h"
+#include "odbc.h"
+#include "utils.h"
+
 void    results_bpass(/*@unused@*/ char * bookID,
                        int * n_choices, char *** choices,
                        int max_length,
@@ -16,6 +20,58 @@ void    results_bpass(/*@unused@*/ char * bookID,
 */
 
 {
+    SQLHENV env;
+    SQLHDBC dbc;
+    SQLHSTMT stmt;
+    SQLRETURN ret; /* ODBC API return status */
+
+    /* CONNECT */
+    ret = odbc_connect(&env, &dbc);
+    if (!SQL_SUCCEEDED(ret)) {
+        return; /* TODO: add error handling */
+    }
+
+    /* Allocate a statement handle */
+    SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
+
+    if (is_empty(bookID)) {
+        *n_choices = 1;
+        char error[] = "ERROR: `book_ref` cannot be empty.";
+        write_choice(error, choices, 0, max_length);
+        return;
+    } else {
+        char query[512];
+        sprintf(query, "SELECT 1 FROM bookings WHERE book_ref = '%s';", bookID);
+
+        ret = SQLExecDirect(stmt, (SQLCHAR*)query, SQL_NTS);
+
+        if (SQL_SUCCEEDED(ret)) {
+            SQLLEN rowCount;
+            SQLRowCount(stmt, &rowCount);
+
+            if (rowCount > 0) {
+                printf("book_ref exists.\n");
+            } else {
+                *n_choices = 1;
+                char error[] = "ERROR: `book_ref` does not exist.";
+                write_choice(error, choices, 0, max_length);
+            }
+        } else {
+            SQLINTEGER i = 0;
+            SQLINTEGER native;
+            SQLCHAR state[ 7 ];
+            SQLCHAR text[256];
+            SQLSMALLINT len;
+            SQLRETURN ret;
+            *n_choices = 1;
+            char error[] = "ERROR: error executing query";
+            SQLGetDiagRec(SQL_HANDLE_STMT, stmt, ++i, state, &native, text, sizeof(text), &len );
+            write_choice(error, choices, 0, max_length);
+        }
+        return;
+    }
+
+
     int i=0;
     int t=0;
 

@@ -3,10 +3,10 @@ CFLAGS = -Wall -Wextra -pedantic -ansi
 LDLIBS = -lodbc -lcurses -lpanel -lmenu -lform
 
 # recompile if this header changes
-HEADERS = odbc.h bpass.h  lmenu.h search.h windows.h loop.h
+HEADERS = odbc.h bpass.h  lmenu.h search.h windows.h loop.h utils.h
 
 EXE = menu
-OBJ = $(EXE).o bpass.o odbc.o loop.o  search.o windows.o
+OBJ = $(EXE).o bpass.o odbc.o loop.o  search.o windows.o utils.o
 
 all : $(EXE)
 

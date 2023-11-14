@@ -219,7 +219,7 @@ void loop(_Windows *windows, _Menus *menus,
                 print_out(out_win, menus->out_win_choices, n_out_choices,
                           out_highlight, windows->out_title);
                 if ((bool)DEBUG) {
-                    (void)snprintf(buffer, 128, "arg1=%s, arg2=%s, arg3=%s",  tmpStr1, tmpStr2, tmpStr3);
+                    (void)snprintf(buffer, 128, "FROM=%s, TO=%s, DATE=%s",  tmpStr1, tmpStr2, tmpStr3);
                     write_msg(msg_win, buffer, -1, -1, windows->msg_title);
                 }
 
@@ -240,6 +240,10 @@ void loop(_Windows *windows, _Menus *menus,
                               windows->cols_out_win-4, windows->rows_out_win-2);
                 print_out(out_win, menus->out_win_choices, n_out_choices,
                           out_highlight, windows->out_title);
+                if ((bool)DEBUG) {
+                    (void)snprintf(buffer, 128, "BOOK_REF=%zu\n",  (size_t)strlen(tmpStr1));
+                    write_msg(msg_win, buffer, -1, -1, windows->msg_title);
+                }
             }
             else if ((choice == BPASS) && focus == (FOCUS_RIGHT)) {
                 write_msg(msg_win, (menus->out_win_choices)[out_highlight],
