@@ -252,7 +252,7 @@ void loop(_Windows *windows, _Menus *menus,
                 (void) wclear(out_win);
                 (void) form_driver(forms->bpass_form, REQ_VALIDATION);
                 tmpStr1 = field_buffer((forms->bpass_form_items)[1], 0);
-                results_bpass(statements->booking_check, tmpStr1, &n_out_choices, & (menus->out_win_choices),
+                results_bpass(statements->booking_check, statements->created_boarding_passes, tmpStr1, &n_out_choices, & (menus->out_win_choices),
                               windows->cols_out_win-4, windows->rows_out_win-2, msg_win);
                 print_out(out_win, menus->out_win_choices, n_out_choices,
                           out_highlight, windows->out_title);

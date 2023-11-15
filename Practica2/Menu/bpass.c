@@ -10,7 +10,6 @@
 #include "odbc.h"
 #include "utils.h"
 
-
 const char* CREATE_BOARDING_PASSES_FUNCTION= "CREATE OR REPLACE FUNCTION create_boarding_passes(book_ref_param TEXT) "
                                           "RETURNS TABLE ( "
                                           "    passenger_name TEXT, "
@@ -112,7 +111,7 @@ const char* CREATE_BOARDING_PASSES_FUNCTION= "CREATE OR REPLACE FUNCTION create_
                                           "$$ LANGUAGE plpgsql;";
 const char * RESULTS_QUERY = "SELECT * FROM create_boarding_passes(?);";
 
-void    results_bpass(SQLHSTMT booking_stmt, char * bookID,
+void    results_bpass(SQLHSTMT booking_stmt, SQLHSTMT created_boarding_passes_stmt, char * bookID,
                        int * n_choices, char *** choices,
                        int max_length,
                        int max_rows,
@@ -167,18 +166,17 @@ void    results_bpass(SQLHSTMT booking_stmt, char * bookID,
         SQLExecute(stmt);
         SQLCloseCursor(stmt);
 
-        SQLPrepare(stmt, (SQLCHAR *)RESULTS_QUERY, SQL_NTS);
-        SQLBindParameter(stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, sizeof(bookID), 0, bookID, sizeof(bookID), NULL);
-        SQLExecute(stmt);
+        SQLBindParameter(created_boarding_passes_stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, sizeof(bookID), 0, bookID, sizeof(bookID), NULL);
+        SQLExecute(created_boarding_passes_stmt);
 
-        SQLBindCol(stmt, 1, SQL_C_CHAR, passenger_name, sizeof(passenger_name), NULL);
-        SQLBindCol(stmt, 2, SQL_C_CHAR, flight_id, sizeof(flight_id), NULL);
-        SQLBindCol(stmt, 3, SQL_C_CHAR, scheduled_departure, sizeof(scheduled_departure), NULL);
-        SQLBindCol(stmt, 4, SQL_C_CHAR, seat_no, sizeof(seat_no), NULL);
+        SQLBindCol(created_boarding_passes_stmt, 1, SQL_C_CHAR, passenger_name, sizeof(passenger_name), NULL);
+        SQLBindCol(created_boarding_passes_stmt, 2, SQL_C_CHAR, flight_id, sizeof(flight_id), NULL);
+        SQLBindCol(created_boarding_passes_stmt, 3, SQL_C_CHAR, scheduled_departure, sizeof(scheduled_departure), NULL);
+        SQLBindCol(created_boarding_passes_stmt, 4, SQL_C_CHAR, seat_no, sizeof(seat_no), NULL);
 
         /* Fetch and process the results */
         *n_choices = 0;
-        while (SQL_SUCCEEDED(ret = SQLFetch(stmt))) {
+        while (SQL_SUCCEEDED(SQLFetch(created_boarding_passes_stmt))) {
             if (*n_choices < max_rows) {
                 /* Allocate memory for the current choice */
                 (*choices)[*n_choices] = (char*)malloc(max_length * sizeof(char));
@@ -194,7 +192,7 @@ void    results_bpass(SQLHSTMT booking_stmt, char * bookID,
             }
         }
 
-        SQLCloseCursor(stmt);
+        SQLCloseCursor(created_boarding_passes_stmt);
 
         if (*n_choices == 0) {
             write_error(msg_win, "booking already has all boarding passes");

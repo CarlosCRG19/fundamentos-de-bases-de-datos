@@ -287,6 +287,8 @@ static void init_statements(_PreparedStatements *statements, SQLHDBC dbc) {
                         ORDER BY scheduled_departure ASC;", SQL_NTS);
 
     SQLPrepare(statements->booking_check, (SQLCHAR *)"SELECT 1 FROM bookings WHERE book_ref = ? LIMIT 1;", SQL_NTS);
+
+    SQLPrepare(statements->created_boarding_passes, (SQLCHAR *)"SELECT * FROM create_boarding_passes(?);", SQL_NTS);
 }
 
 static void free_struct(_Windows windows, _Panels panels,
@@ -371,9 +373,11 @@ The leaks you should worry about are the “unreachable” leaks because they in
     endwin();
 }
 
-static void free_handles(_PreparedStatements *statements) {
-    SQLFreeHandle(SQL_HANDLE_STMT, statements->flight_connections);
-    SQLFreeHandle(SQL_HANDLE_STMT, statements->flights_details);
+static void free_handles(_PreparedStatements statements) {
+    SQLFreeHandle(SQL_HANDLE_STMT, statements.flight_connections);
+    SQLFreeHandle(SQL_HANDLE_STMT, statements.flights_details);
+    SQLFreeHandle(SQL_HANDLE_STMT, statements.booking_check);
+    SQLFreeHandle(SQL_HANDLE_STMT, statements.created_boarding_passes);
 }
 
 int main() {
@@ -408,7 +412,7 @@ int main() {
     free_struct(windows, panels, menus, forms);
 
     /* free statement handles */
-    free_handles(&statements);
+    free_handles(statements);
 
     /* DISCONNECT */
     ret = odbc_disconnect(env, dbc);
