@@ -5,7 +5,7 @@
 #include <sqlext.h>
 
 /* CONNECTION PARAMETERS, ADAPT TO YOUR SCENARIO */
-#define CONNECTION_PARS "DRIVER=PostgreSQL Unicode;DATABASE=flight;SERVER=localhost;PORT=5432;UID=postgres;PWD=;"
+#define CONNECTION_PARS "DRIVER=PostgreSQL ANSI;DATABASE=flight;SERVER=localhost;PORT=5432;UID=alumnodb;PWD=alumnodb;"
 
 
 /* REPORT OF THE MOST RECENT ERROR USING HANDLE handle */
