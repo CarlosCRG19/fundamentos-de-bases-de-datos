@@ -236,11 +236,6 @@ void loop(_Windows *windows, _Menus *menus,
                                windows->cols_out_win-4, windows->rows_out_win-2, msg_win, search_flight_ids_1, search_flight_ids_2);
                 print_out(out_win, menus->out_win_choices, n_out_choices,
                           out_highlight, windows->out_title);
-                if ((bool)DEBUG) {
-                    (void)snprintf(buffer, 128, "FROM=%s, TO=%s, DATE=%s",  tmpStr1, tmpStr2, tmpStr3);
-                    write_msg(msg_win, buffer, -1, -1, windows->msg_title);
-                }
-
             }
             else if ((choice == SEARCH) && (focus == FOCUS_RIGHT)) {
                 flight_details(statements->flights_details, search_flight_ids_1[out_highlight], search_flight_ids_2[out_highlight], msg_win);

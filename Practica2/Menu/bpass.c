@@ -109,7 +109,6 @@ const char* CREATE_BOARDING_PASSES_FUNCTION= "CREATE OR REPLACE FUNCTION create_
                                           "    RETURN QUERY SELECT * FROM results; "
                                           "END; "
                                           "$$ LANGUAGE plpgsql;";
-const char * RESULTS_QUERY = "SELECT * FROM create_boarding_passes(?);";
 
 void    results_bpass(SQLHSTMT booking_stmt, SQLHSTMT created_boarding_passes_stmt, char * bookID,
                        int * n_choices, char *** choices,
