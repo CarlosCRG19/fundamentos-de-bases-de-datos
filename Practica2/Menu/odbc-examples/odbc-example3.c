@@ -43,6 +43,8 @@ int main(void) {
     char x[512];
     SQLCHAR y[512];
 
+    char result[1024], query[512], temp[512];
+
     /* CONNECT */
     ret = odbc_connect(&env, &dbc);
     if (!SQL_SUCCEEDED(ret)) {
@@ -51,66 +53,42 @@ int main(void) {
 
     /* Allocate a statement handle */
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
+        
+    SQLCHAR aircraft_code[8], scheduled_departure[64], scheduled_arrival[64];
 
     printf("x = ");
     fflush(stdout);
     while (fgets(x, sizeof(x), stdin) != NULL) {
         char query[3500];
-        trim_trailing(x);
-        sprintf(query, "SELECT * FROM\n"
-        "(\n"
-        "    SELECT\n"
-        "        f.scheduled_departure AS scheduled_departure,\n"
-        "        f.scheduled_arrival AS scheduled_arrival,\n"
-        "        0 AS no_connections,\n"
-        "        COUNT(s.seat_no) AS seats_available\n"
-        "    FROM flights f\n"
-        "    JOIN seats s ON f.aircraft_code = s.aircraft_code\n"
-        "    LEFT JOIN boarding_passes bp ON f.flight_id = bp.flight_id AND s.seat_no = bp.seat_no\n"
-        "    WHERE\n"
-        "        f.departure_airport = 'REN'\n"
-        "        AND f.arrival_airport = 'VKO'\n"
-        "        AND DATE(f.scheduled_departure) = '2017-08-07'\n"
-        "        AND bp.ticket_no IS NULL\n"
-        "    GROUP BY f.flight_id\n"
-        "\n"
-        "    UNION\n"
-        "\n"
-        "    SELECT\n"
-        "        f1.scheduled_departure AS scheduled_departure,\n"
-        "        f2.scheduled_arrival AS scheduled_arrival,\n"
-        "        1 AS no_connections,\n"
-        "        LEAST(COUNT(DISTINCT s1.seat_no), COUNT(DISTINCT s2.seat_no)) AS seats_available\n"
-        "    FROM flights f1\n"
-        "    JOIN flights f2 ON f1.arrival_airport = f2.departure_airport\n"
-        "    JOIN seats s1 ON f1.aircraft_code = s1.aircraft_code\n"
-        "    JOIN seats s2 ON f2.aircraft_code = s2.aircraft_code\n"
-        "    WHERE s1.seat_no NOT IN (\n"
-        "            SELECT seat_no\n"
-        "            FROM boarding_passes\n"
-        "            WHERE flight_id = f1.flight_id)\n"
-        "        AND s2.seat_no NOT IN (\n"
-        "            SELECT seat_no\n"
-        "            FROM boarding_passes\n"
-        "            WHERE flight_id = f2.flight_id) \n"
-        "        AND f1.scheduled_arrival < f2.scheduled_departure\n"
-        "        AND EXTRACT(EPOCH FROM (f2.scheduled_departure - f1.scheduled_arrival)) / 3600 <= 24\n"
-        "        AND f1.departure_airport = 'REN'\n"
-        "        AND f2.arrival_airport = 'VKO'\n"
-        "        AND DATE(f1.scheduled_departure) = '2017-08-07'\n"
-        "    GROUP BY f1.departure_airport, f2.arrival_airport, f1.scheduled_departure, f2.scheduled_arrival\n"
-        ") AS combined_result\n"
-        "WHERE seats_available > 0\n"
-        "ORDER BY scheduled_arrival - scheduled_departure ASC;");
+
+        sprintf(query, "SELECT aircraft_code, scheduled_departure, scheduled_arrival \
+                        FROM flights \
+                        WHERE flight_id = '27342' OR flight_id = -1 \
+                        ORDER BY scheduled_departure ASC;");
+
+        SQLExecDirect(stmt, (SQLCHAR *)query, SQL_NTS);
+
+        SQLBindCol(stmt, 1, SQL_C_CHAR, aircraft_code, sizeof(aircraft_code), NULL);
+        SQLBindCol(stmt, 2, SQL_C_CHAR, scheduled_departure, sizeof(scheduled_departure), NULL);
+        SQLBindCol(stmt, 3, SQL_C_CHAR, scheduled_arrival, sizeof(scheduled_arrival), NULL);
+
+
         printf("%s", query); 
 
         SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
 
         SQLBindCol(stmt, 1, SQL_C_CHAR, y, sizeof(y), NULL);
-
-        /* Loop through the rows in the result-set */
+        result[0] = '\0';  
         while (SQL_SUCCEEDED(ret = SQLFetch(stmt))) {
-            printf("y = %s\n", y);
+            sprintf(temp, "FID: %s, AC: %s, SD: %s, SA: %s\n", "dummy", aircraft_code, scheduled_departure, scheduled_arrival);
+            strcat(result, temp);
+        }
+
+        if (result[0] != '\0') {
+            result[strlen(result) - 1] = '\0';
+            printf("%s", result);
+        } else {
+            printf("falloooo\n");
         }
 
         SQLCloseCursor(stmt);
