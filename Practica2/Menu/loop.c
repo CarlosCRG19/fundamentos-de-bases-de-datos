@@ -22,6 +22,7 @@
  +-------------------------------+
 */
 #include "loop.h"
+#include "search.h"
 #include "utils.h"
 #include <string.h>
 #include <stdio.h>
@@ -240,9 +241,10 @@ void loop(_Windows *windows, _Menus *menus,
 
             }
             else if ((choice == SEARCH) && (focus == FOCUS_RIGHT)) {
-                (void)snprintf(buffer, 128, "flight id 1 is %s, flight id 2 is %s", search_flight_ids_1[out_highlight], search_flight_ids_2[out_highlight]);
+                /*(void)snprintf(buffer, 128, "flight id 1 is %s, flight id 2 is %s", search_flight_ids_1[out_highlight], search_flight_ids_2[out_highlight]);
                 write_msg(msg_win,buffer,
-                          -1, -1, windows->msg_title);
+                          -1, -1, windows->msg_title);*/
+                flight_details(search_flight_ids_1[out_highlight], msg_win);
             }
             else if ((choice == BPASS) && (focus == FOCUS_LEFT)) {
                 out_highlight = 0;

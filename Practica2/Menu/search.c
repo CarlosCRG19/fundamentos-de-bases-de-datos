@@ -141,3 +141,57 @@ void results_search(char * from, char * to, char * date, int * n_choices,
         return ;
     }
 }
+
+void flight_details(char * flight_id, WINDOW *msg_win) {
+    SQLHENV env;
+    SQLHDBC dbc;
+    SQLHSTMT stmt;
+    SQLRETURN ret; /* ODBC API return status */
+
+    SQLCHAR aircraft_code[8], scheduled_departure[64], scheduled_arrival[64];
+
+    char result[512];
+    char query[512];
+
+    /* CONNECT */
+    ret = odbc_connect(&env, &dbc);
+    if (!SQL_SUCCEEDED(ret)) {
+        write_error(msg_win, "could not connect to database");
+        return;
+    }
+
+    /* Allocate a statement handle */
+    SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
+
+    /*SQLPrepare(stmt, (SQLCHAR *) "SELECT aircraft_code, scheduled_departure, scheduled_arrival \
+            FROM flights f \
+            WHERE f.flight_id = ? LIMIT 1;", SQL_NTS);
+
+    SQLBindParameter(stmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG, SQL_INTEGER, 0, 0, &flight_id, 0, NULL);
+
+    SQLExecute(stmt);*/
+    sprintf(query, "SELECT aircraft_code, scheduled_departure, scheduled_arrival FROM flights WHERE flight_id = %s", flight_id);
+    SQLExecDirect(stmt, (SQLCHAR *)query, SQL_NTS);
+
+    SQLBindCol(stmt, 1, SQL_C_CHAR, aircraft_code, sizeof(aircraft_code), NULL);
+    SQLBindCol(stmt, 2, SQL_C_CHAR, scheduled_departure, sizeof(scheduled_departure), NULL);
+    SQLBindCol(stmt, 3, SQL_C_CHAR, scheduled_arrival, sizeof(scheduled_arrival), NULL);
+
+    if (SQL_SUCCEEDED(ret = SQLFetch(stmt))) {
+        sprintf(result, "ID: %s, Aircraft Code: %s, Departure: %s, Arrival: %s", flight_id, aircraft_code, scheduled_departure, scheduled_arrival);
+        write_success(msg_win, result);
+    } else {
+        write_error(msg_win, "error executing query");
+    }
+
+    SQLCloseCursor(stmt);
+
+    /* free up statement handle */
+    SQLFreeHandle(SQL_HANDLE_STMT, stmt);
+
+    /* DISCONNECT */
+    ret = odbc_disconnect(env, dbc);
+    if (!SQL_SUCCEEDED(ret)) {
+        return ;
+    }
+}
