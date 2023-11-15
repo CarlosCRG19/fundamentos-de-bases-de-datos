@@ -60,7 +60,10 @@ typedef struct _Forms{
 } _Forms;
 
 typedef struct _PreparedStatements {
-    SQLHSTMT flight_connections, flights_details, booking_check, created_boarding_passes;
+    SQLHSTMT flight_connections; /* gets flights between two airports */
+    SQLHSTMT flights_details; /* retrieves details of a flight */
+    SQLHSTMT booking_check; /* checks if a booking exists with a given book_ref */
+    SQLHSTMT created_boarding_passes; /* queries the boarding passes that were just assigned */
 } _PreparedStatements;
 
 void _initsrc(_Windows *windows,

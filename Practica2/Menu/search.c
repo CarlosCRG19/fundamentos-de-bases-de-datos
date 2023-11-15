@@ -22,6 +22,7 @@ void results_search(SQLHSTMT stmt, char * from, char * to, char * date, int * n_
 
     char result[512], missing_fields[124] = "the following fields are missing: ";
 
+    /* remove white spaces from inputs */
     trim_trailing(from);
     trim_trailing(to);
     trim_trailing(date);
@@ -53,6 +54,7 @@ void results_search(SQLHSTMT stmt, char * from, char * to, char * date, int * n_
     SQLBindParameter(stmt, 6, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, sizeof(date), 0, date, sizeof(date), NULL);
 
     if (SQL_SUCCEEDED(SQLExecute(stmt))) {
+        /* bind all columns to reused statement */
         SQLBindCol(stmt, 1, SQL_C_CHAR, scheduled_departure, sizeof(scheduled_departure), NULL);
         SQLBindCol(stmt, 2, SQL_C_CHAR, scheduled_arrival, sizeof(scheduled_arrival), NULL);
         SQLBindCol(stmt, 3, SQL_INTEGER, &n_connections, sizeof(n_connections), NULL);

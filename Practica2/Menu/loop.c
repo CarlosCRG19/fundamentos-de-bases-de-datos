@@ -251,7 +251,6 @@ void loop(_Windows *windows, _Menus *menus,
                               windows->cols_out_win-4, windows->rows_out_win-2, msg_win);
                 print_out(out_win, menus->out_win_choices, n_out_choices,
                           out_highlight, windows->out_title);
-                
             }
             else if ((choice == BPASS) && focus == (FOCUS_RIGHT)) {
                 write_msg(msg_win, (menus->out_win_choices)[out_highlight],

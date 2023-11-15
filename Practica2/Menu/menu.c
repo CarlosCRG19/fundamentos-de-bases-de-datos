@@ -124,6 +124,9 @@ static void init_struct(_Windows *windows, __attribute__((unused)) _Panels *pane
     strcpy(windows->msg_title, "Msg");
 }
 
+/* Initializes the statements structure to provide the prepared statements to the rest of 
+ * the application
+ */
 static void init_statements(_PreparedStatements *statements, SQLHDBC dbc) {
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &(statements->flight_connections));
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &(statements->flights_details));
@@ -371,6 +374,10 @@ The leaks you should worry about are the “unreachable” leaks because they in
     endwin();
 }
 
+/*
+ * Created by CarlosCRG19 14/11/23
+ * frees all of the reused prepared statements
+ */
 static void free_handles(_PreparedStatements statements) {
     SQLFreeHandle(SQL_HANDLE_STMT, statements.flight_connections);
     SQLFreeHandle(SQL_HANDLE_STMT, statements.flights_details);
