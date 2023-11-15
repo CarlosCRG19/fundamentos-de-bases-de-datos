@@ -4,6 +4,52 @@
 #include "odbc.h"
 #include "utils.h"
 
+const char *QUERY ="SELECT * FROM "
+                   "( "
+                   "    SELECT "
+                   "        f.scheduled_departure AS scheduled_departure, "
+                   "        f.scheduled_arrival AS scheduled_arrival, "
+                   "        0 AS no_connections, "
+                   "        COUNT(s.seat_no) AS seats_available "
+                   "    FROM flights f "
+                   "    JOIN seats s ON f.aircraft_code = s.aircraft_code "
+                   "    LEFT JOIN boarding_passes bp ON f.flight_id = bp.flight_id AND s.seat_no = bp.seat_no "
+                   "    WHERE "
+                   "        f.departure_airport = ? "
+                   "        AND f.arrival_airport = ? "
+                   "        AND DATE(f.scheduled_departure) = ? "
+                   "        AND bp.ticket_no IS NULL "
+                   "    GROUP BY f.flight_id "
+                   " "
+                   "    UNION "
+                   " "
+                   "    SELECT "
+                   "        f1.scheduled_departure AS scheduled_departure, "
+                   "        f2.scheduled_arrival AS scheduled_arrival, "
+                   "        1 AS no_connections, "
+                   "        LEAST(COUNT(DISTINCT s1.seat_no), COUNT(DISTINCT s2.seat_no)) AS seats_available "
+                   "    FROM flights f1 "
+                   "    JOIN flights f2 ON f1.arrival_airport = f2.departure_airport "
+                   "    JOIN seats s1 ON f1.aircraft_code = s1.aircraft_code "
+                   "    JOIN seats s2 ON f2.aircraft_code = s2.aircraft_code "
+                   "    WHERE s1.seat_no NOT IN ( "
+                   "            SELECT seat_no "
+                   "            FROM boarding_passes "
+                   "            WHERE flight_id = f1.flight_id) "
+                   "        AND s2.seat_no NOT IN ( "
+                   "            SELECT seat_no "
+                   "            FROM boarding_passes "
+                   "            WHERE flight_id = f2.flight_id)  "
+                   "        AND f1.scheduled_arrival < f2.scheduled_departure "
+                   "        AND EXTRACT(EPOCH FROM (f2.scheduled_departure - f1.scheduled_arrival)) / 3600 <= 24 "
+                   "        AND f1.departure_airport = ? "
+                   "        AND f2.arrival_airport = ? "
+                   "        AND DATE(f1.scheduled_departure) = ? "
+                   "    GROUP BY f1.departure_airport, f2.arrival_airport, f1.scheduled_departure, f2.scheduled_arrival "
+                   ") AS combined_result "
+                   "WHERE seats_available > 0 "
+                   "ORDER BY scheduled_arrival - scheduled_departure ASC;";
+
 void results_search(char * from, char * to, char * date, int * n_choices,
                     char *** choices, int max_length, int max_rows, WINDOW *msg_win)
    /**here you need to do your query and fill the choices array of strings
@@ -26,7 +72,6 @@ void results_search(char * from, char * to, char * date, int * n_choices,
     SQLLEN row_count;
 
     char result[512];
-    char query[4000];
 
     /* CONNECT */
     ret = odbc_connect(&env, &dbc);
@@ -38,55 +83,17 @@ void results_search(char * from, char * to, char * date, int * n_choices,
     /* Allocate a statement handle */
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
 
-    /* Use sprintf to insert values into the query string */
-    sprintf(query, "SELECT * FROM\n"
-            "(\n"
-            "    SELECT\n"
-            "        f.scheduled_departure AS scheduled_departure,\n"
-            "        f.scheduled_arrival AS scheduled_arrival,\n"
-            "        0 AS no_connections,\n"
-            "        COUNT(s.seat_no) AS seats_available\n"
-            "    FROM flights f\n"
-            "    JOIN seats s ON f.aircraft_code = s.aircraft_code\n"
-            "    LEFT JOIN boarding_passes bp ON f.flight_id = bp.flight_id AND s.seat_no = bp.seat_no\n"
-            "    WHERE\n"
-            "        f.departure_airport = '%s'\n"
-            "        AND f.arrival_airport = '%s'\n"
-            "        AND DATE(f.scheduled_departure) = '%s'\n"
-            "        AND bp.ticket_no IS NULL\n"
-            "    GROUP BY f.flight_id\n"
-            "\n"
-            "    UNION\n"
-            "\n"
-            "    SELECT\n"
-            "        f1.scheduled_departure AS scheduled_departure,\n"
-            "        f2.scheduled_arrival AS scheduled_arrival,\n"
-            "        1 AS no_connections,\n"
-            "        LEAST(COUNT(DISTINCT s1.seat_no), COUNT(DISTINCT s2.seat_no)) AS seats_available\n"
-            "    FROM flights f1\n"
-            "    JOIN flights f2 ON f1.arrival_airport = f2.departure_airport\n"
-            "    JOIN seats s1 ON f1.aircraft_code = s1.aircraft_code\n"
-            "    JOIN seats s2 ON f2.aircraft_code = s2.aircraft_code\n"
-            "    WHERE s1.seat_no NOT IN (\n"
-            "            SELECT seat_no\n"
-            "            FROM boarding_passes\n"
-            "            WHERE flight_id = f1.flight_id)\n"
-            "        AND s2.seat_no NOT IN (\n"
-            "            SELECT seat_no\n"
-            "            FROM boarding_passes\n"
-            "            WHERE flight_id = f2.flight_id) \n"
-            "        AND f1.scheduled_arrival < f2.scheduled_departure\n"
-            "        AND EXTRACT(EPOCH FROM (f2.scheduled_departure - f1.scheduled_arrival)) / 3600 <= 24\n"
-            "        AND f1.departure_airport = '%s'\n"
-            "        AND f2.arrival_airport = '%s'\n"
-            "        AND DATE(f1.scheduled_departure) = '%s'\n"
-            "    GROUP BY f1.departure_airport, f2.arrival_airport, f1.scheduled_departure, f2.scheduled_arrival\n"
-            ") AS combined_result\n"
-            "WHERE seats_available > 0\n"
-            "ORDER BY scheduled_arrival - scheduled_departure ASC;",
-            from, to, date, from, to, date);
+    SQLPrepare(stmt, (SQLCHAR *)QUERY, SQL_NTS);
 
-    SQLExecDirect(stmt, (SQLCHAR *)query, SQL_NTS);
+    /* Bind parameters */
+    SQLBindParameter(stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, sizeof(from), 0, from, sizeof(from), NULL);
+    SQLBindParameter(stmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, sizeof(to), 0, to, sizeof(to), NULL);
+    SQLBindParameter(stmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, sizeof(date), 0, date, sizeof(date), NULL);
+    SQLBindParameter(stmt, 4, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, sizeof(from), 0, from, sizeof(from), NULL);
+    SQLBindParameter(stmt, 5, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, sizeof(to), 0, to, sizeof(to), NULL);
+    SQLBindParameter(stmt, 6, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, sizeof(date), 0, date, sizeof(date), NULL);
+
+    SQLExecute(stmt);
 
     SQLBindCol(stmt, 1, SQL_C_CHAR, scheduled_departure, sizeof(scheduled_departure), NULL);
     SQLBindCol(stmt, 2, SQL_C_CHAR, scheduled_arrival, sizeof(scheduled_arrival), NULL);
