@@ -10,7 +10,7 @@
 #include "odbc.h"
 #include "utils.h"
 
-const char *BOOKINGS_QUERY = "SELECT 1 FROM bookings WHERE book_ref = ? LIMIT 1;";
+
 const char* CREATE_BOARDING_PASSES_FUNCTION= "CREATE OR REPLACE FUNCTION create_boarding_passes(book_ref_param TEXT) "
                                           "RETURNS TABLE ( "
                                           "    passenger_name TEXT, "
@@ -112,7 +112,7 @@ const char* CREATE_BOARDING_PASSES_FUNCTION= "CREATE OR REPLACE FUNCTION create_
                                           "$$ LANGUAGE plpgsql;";
 const char * RESULTS_QUERY = "SELECT * FROM create_boarding_passes(?);";
 
-void    results_bpass(char * bookID,
+void    results_bpass(SQLHSTMT booking_stmt, char * bookID,
                        int * n_choices, char *** choices,
                        int max_length,
                        int max_rows,
@@ -155,12 +155,11 @@ void    results_bpass(char * bookID,
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
 
     /* Check if booking with such booking ID exists */
-    SQLPrepare(stmt, (SQLCHAR *)BOOKINGS_QUERY, SQL_NTS);
-    SQLBindParameter(stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, sizeof(bookID), 0, bookID, sizeof(bookID), NULL);
-    SQLExecute(stmt);
+    SQLBindParameter(booking_stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, sizeof(bookID), 0, bookID, sizeof(bookID), NULL);
+    SQLExecute(booking_stmt);
 
-    SQLRowCount(stmt, &row_count);
-    SQLCloseCursor(stmt);
+    SQLRowCount(booking_stmt, &row_count);
+    SQLCloseCursor(booking_stmt);
 
     if (row_count > 0) {
         /* SQL statement to execute the DO block with parameters */

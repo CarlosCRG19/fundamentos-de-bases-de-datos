@@ -285,6 +285,8 @@ static void init_statements(_PreparedStatements *statements, SQLHDBC dbc) {
                         FROM flights \
                         WHERE flight_id = ? OR flight_id = ? \
                         ORDER BY scheduled_departure ASC;", SQL_NTS);
+
+    SQLPrepare(statements->booking_check, (SQLCHAR *)"SELECT 1 FROM bookings WHERE book_ref = ? LIMIT 1;", SQL_NTS);
 }
 
 static void free_struct(_Windows windows, _Panels panels,
