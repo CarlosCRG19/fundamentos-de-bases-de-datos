@@ -68,6 +68,7 @@ void loop(_Windows *windows, _Menus *menus,
     int out_highlight = 0; /* line highlighted in win_out window */
     int rows_out_window = 0; /* size of win_out window */
     int i = 0; /* dummy variable for loops */
+    char** search_flight_ids_1 = (char**)malloc((windows->cols_out_win-4) * sizeof(char*));
 
     (void) curs_set(1); /* show cursor */
     menu = menus->menu;
@@ -207,8 +208,10 @@ void loop(_Windows *windows, _Menus *menus,
                 break; /* quit */
             else if ((choice == SEARCH) && (focus == FOCUS_LEFT)) {
                 out_highlight = 0;
-                for(i=0; i< rows_out_window ; i++)
+                for(i=0; i< rows_out_window ; i++) {
                     (menus->out_win_choices)[i][0] = '\0';
+                    /*search_flight_ids_1[i][0] = '\0'; */
+                }
                 (void)wclear(out_win);
                 (void)form_driver(forms->search_form, REQ_VALIDATION);
                 tmpStr1 = field_buffer((forms->search_form_items)[1], 0);
@@ -216,7 +219,7 @@ void loop(_Windows *windows, _Menus *menus,
                 tmpStr3 = field_buffer((forms->search_form_items)[5], 0);
                 /* aqui se ejecutan los resultados */
                 results_search(tmpStr1, tmpStr2, tmpStr3, &n_out_choices, & (menus->out_win_choices),
-                               windows->cols_out_win-4, windows->rows_out_win-2, msg_win);
+                               windows->cols_out_win-4, windows->rows_out_win-2, msg_win, search_flight_ids_1);
                 print_out(out_win, menus->out_win_choices, n_out_choices,
                           out_highlight, windows->out_title);
                 if ((bool)DEBUG) {
@@ -226,7 +229,7 @@ void loop(_Windows *windows, _Menus *menus,
 
             }
             else if ((choice == SEARCH) && (focus == FOCUS_RIGHT)) {
-                (void)snprintf(buffer, 128, "msg=%s", (menus->out_win_choices)[out_highlight] );
+                (void)snprintf(buffer, 128, "flight id 1 is %s", search_flight_ids_1[out_highlight] );
                 write_msg(msg_win,buffer,
                           -1, -1, windows->msg_title);
             }
@@ -234,6 +237,8 @@ void loop(_Windows *windows, _Menus *menus,
                 out_highlight = 0;
                 for(i=0; i< rows_out_window ; i++)
                     (menus->out_win_choices)[i][0] = '\0';
+                for(i=0; i< windows->cols_out_win-5 ; i++)
+                    search_flight_ids_1[i][0] = '\0';
                 (void) wclear(out_win);
                 (void) form_driver(forms->bpass_form, REQ_VALIDATION);
                 tmpStr1 = field_buffer((forms->bpass_form_items)[1], 0);
