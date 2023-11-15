@@ -261,4 +261,12 @@ void loop(_Windows *windows, _Menus *menus,
         choice = -1;
         enterKey = (bool) FALSE;
     }
+
+    for (i = 0; i < max_rows; i++) {
+        free(search_flight_ids_1[i]);
+        free(search_flight_ids_2[i]);
+    }
+
+    free(search_flight_ids_1);
+    free(search_flight_ids_2);
 }
