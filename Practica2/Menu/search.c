@@ -11,7 +11,8 @@ const char *QUERY ="SELECT * FROM "
                    "        f.scheduled_arrival AS scheduled_arrival, "
                    "        0 AS no_connections, "
                    "        COUNT(s.seat_no) AS seats_available, "
-                   "        f.flight_id AS flight_id_1 "
+                   "        f.flight_id AS flight_id_1, "
+                   "        -1 AS flight_id_2 "
                    "    FROM flights f "
                    "    JOIN seats s ON f.aircraft_code = s.aircraft_code "
                    "    LEFT JOIN boarding_passes bp ON f.flight_id = bp.flight_id AND s.seat_no = bp.seat_no "
@@ -29,7 +30,8 @@ const char *QUERY ="SELECT * FROM "
                    "        f2.scheduled_arrival AS scheduled_arrival, "
                    "        1 AS no_connections, "
                    "        LEAST(COUNT(DISTINCT s1.seat_no), COUNT(DISTINCT s2.seat_no)) AS seats_available, "
-                   "        f1.flight_id AS flight_id_1 "
+                   "        f1.flight_id AS flight_id_1, "
+                   "        f2.flight_id AS flight_id_2 "
                    "    FROM flights f1 "
                    "    JOIN flights f2 ON f1.arrival_airport = f2.departure_airport "
                    "    JOIN seats s1 ON f1.aircraft_code = s1.aircraft_code "
@@ -47,13 +49,13 @@ const char *QUERY ="SELECT * FROM "
                    "        AND f1.departure_airport = ? "
                    "        AND f2.arrival_airport = ? "
                    "        AND DATE(f1.scheduled_departure) = ? "
-                   "    GROUP BY f1.departure_airport, f2.arrival_airport, f1.scheduled_departure, f2.scheduled_arrival, f1.flight_id "
+                   "    GROUP BY f1.departure_airport, f2.arrival_airport, f1.scheduled_departure, f2.scheduled_arrival, f1.flight_id, f2.flight_id "
                    ") AS combined_result "
                    "WHERE seats_available > 0 "
                    "ORDER BY scheduled_arrival - scheduled_departure ASC;";
 
 void results_search(char * from, char * to, char * date, int * n_choices,
-                    char *** choices, int max_length, int max_rows, WINDOW *msg_win, char ** search_flight_ids_1)
+                    char *** choices, int max_length, int max_rows, WINDOW *msg_win, char ** search_flight_ids_1, char ** search_flight_ids_2)
    /**here you need to do your query and fill the choices array of strings
  *
  * @param from form field from
@@ -70,7 +72,7 @@ void results_search(char * from, char * to, char * date, int * n_choices,
     SQLRETURN ret; /* ODBC API return status */
 
     SQLCHAR scheduled_departure[64], scheduled_arrival[64];
-    SQLINTEGER n_connections, n_availabe_seats, flight_id_1;
+    SQLINTEGER n_connections, n_availabe_seats, flight_id_1, flight_id_2;
     SQLLEN row_count;
 
     char result[512];
@@ -102,6 +104,7 @@ void results_search(char * from, char * to, char * date, int * n_choices,
     SQLBindCol(stmt, 3, SQL_INTEGER, &n_connections, sizeof(n_connections), NULL);
     SQLBindCol(stmt, 4, SQL_INTEGER, &n_availabe_seats, sizeof(n_availabe_seats), NULL);
     SQLBindCol(stmt, 5, SQL_INTEGER, &flight_id_1, sizeof(flight_id_1), NULL);
+    SQLBindCol(stmt, 6, SQL_INTEGER, &flight_id_2, sizeof(flight_id_2), NULL);
 
     /* Fetch and process the results */
     *n_choices = 0;
@@ -117,6 +120,12 @@ void results_search(char * from, char * to, char * date, int * n_choices,
             /* Use proper indexing and dereferencing for choices */
             write_choice(result, choices, (*n_choices), max_length);
             sprintf(search_flight_ids_1[*n_choices], "%d", flight_id_1);
+
+            if (flight_id_2 != SQL_NULL_DATA) {
+                search_flight_ids_2[*n_choices] = (char*)malloc(sizeof(flight_id_2));
+                sprintf(search_flight_ids_2[*n_choices], "%d", flight_id_2);
+            }
+
             (*n_choices)++;
         }
     }

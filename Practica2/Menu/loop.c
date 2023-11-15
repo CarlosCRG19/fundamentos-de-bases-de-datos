@@ -68,7 +68,17 @@ void loop(_Windows *windows, _Menus *menus,
     int out_highlight = 0; /* line highlighted in win_out window */
     int rows_out_window = 0; /* size of win_out window */
     int i = 0; /* dummy variable for loops */
-    char** search_flight_ids_1 = (char**)malloc((windows->cols_out_win-4) * sizeof(char*));
+
+    char max_length = windows->cols_out_win-4; 
+    char max_rows= windows->cols_out_win-2; 
+    char** search_flight_ids_1 = (char**)malloc(max_rows * sizeof(char*));
+    char** search_flight_ids_2 = (char**)malloc(max_rows * sizeof(char*));
+
+    for (i=0; i < max_rows; i++) {
+        search_flight_ids_1[i] = (char*) calloc(max_length, sizeof(char*));
+        search_flight_ids_2[i] = (char*) calloc(max_length, sizeof(char*));
+    }
+
 
     (void) curs_set(1); /* show cursor */
     menu = menus->menu;
@@ -210,7 +220,8 @@ void loop(_Windows *windows, _Menus *menus,
                 out_highlight = 0;
                 for(i=0; i< rows_out_window ; i++) {
                     (menus->out_win_choices)[i][0] = '\0';
-                    /*search_flight_ids_1[i][0] = '\0'; */
+                    search_flight_ids_1[i][0] = '\0';
+                    search_flight_ids_2[i][0] = '\0';
                 }
                 (void)wclear(out_win);
                 (void)form_driver(forms->search_form, REQ_VALIDATION);
@@ -219,7 +230,7 @@ void loop(_Windows *windows, _Menus *menus,
                 tmpStr3 = field_buffer((forms->search_form_items)[5], 0);
                 /* aqui se ejecutan los resultados */
                 results_search(tmpStr1, tmpStr2, tmpStr3, &n_out_choices, & (menus->out_win_choices),
-                               windows->cols_out_win-4, windows->rows_out_win-2, msg_win, search_flight_ids_1);
+                               windows->cols_out_win-4, windows->rows_out_win-2, msg_win, search_flight_ids_1, search_flight_ids_2);
                 print_out(out_win, menus->out_win_choices, n_out_choices,
                           out_highlight, windows->out_title);
                 if ((bool)DEBUG) {
@@ -229,7 +240,7 @@ void loop(_Windows *windows, _Menus *menus,
 
             }
             else if ((choice == SEARCH) && (focus == FOCUS_RIGHT)) {
-                (void)snprintf(buffer, 128, "flight id 1 is %s", search_flight_ids_1[out_highlight] );
+                (void)snprintf(buffer, 128, "flight id 1 is %s, flight id 2 is %s", search_flight_ids_1[out_highlight], search_flight_ids_2[out_highlight]);
                 write_msg(msg_win,buffer,
                           -1, -1, windows->msg_title);
             }
@@ -237,8 +248,6 @@ void loop(_Windows *windows, _Menus *menus,
                 out_highlight = 0;
                 for(i=0; i< rows_out_window ; i++)
                     (menus->out_win_choices)[i][0] = '\0';
-                for(i=0; i< windows->cols_out_win-5 ; i++)
-                    search_flight_ids_1[i][0] = '\0';
                 (void) wclear(out_win);
                 (void) form_driver(forms->bpass_form, REQ_VALIDATION);
                 tmpStr1 = field_buffer((forms->bpass_form_items)[1], 0);
