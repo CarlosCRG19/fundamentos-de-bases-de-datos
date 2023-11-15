@@ -191,22 +191,13 @@ static void init_statements(_PreparedStatements *statements, SQLHDBC dbc) {
     SQLPrepare(statements->created_boarding_passes, (SQLCHAR *)"SELECT * FROM create_boarding_passes(?);", SQL_NTS);
 }
 
-static void init_create_boarding_passes_function() {
-    SQLHENV env;
-    SQLHDBC dbc;
+static void init_create_boarding_passes_function(SQLHDBC dbc) {
     SQLHSTMT stmt;
-    SQLRETURN ret; /* ODBC API return status */
-
-    /* CONNECT */
-    ret = odbc_connect(&env, &dbc);
-    if (!SQL_SUCCEEDED(ret)) {
-        return;
-    }
 
     /* Allocate a statement handle */
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
     /* SQL statement to execute the DO block with parameters */
-    SQLPrepare(stmt, (SQLCHAR *)"CREATE OR REPLACE FUNCTION create_boarding_passes(book_ref_param TEXT) "
+    SQLExecDirect(stmt, (SQLCHAR *)"CREATE OR REPLACE FUNCTION create_boarding_passes(book_ref_param TEXT) "
                                           "RETURNS TABLE ( "
                                           "    passenger_name TEXT, "
                                           "    flight_id INT, "
@@ -305,18 +296,11 @@ static void init_create_boarding_passes_function() {
                                           "    RETURN QUERY SELECT * FROM results; "
                                           "END; "
                                           "$$ LANGUAGE plpgsql;", SQL_NTS);
-    SQLExecute(stmt);
     SQLCloseCursor(stmt);
 
 
     /* free up statement handle */
     SQLFreeHandle(SQL_HANDLE_STMT, stmt);
-
-    /* DISCONNECT */
-    ret = odbc_disconnect(env, dbc);
-    if (!SQL_SUCCEEDED(ret)) {
-        return ;
-    }
 }
 
 static void free_struct(_Windows windows, _Panels panels,
@@ -432,7 +416,7 @@ int main() {
     }
 
     init_statements(&statements, dbc);
-    init_create_boarding_passes_function();
+    init_create_boarding_passes_function(dbc);
 
     /* process keyboard */
     loop(&windows, &menus, &forms, &panels, &statements);
