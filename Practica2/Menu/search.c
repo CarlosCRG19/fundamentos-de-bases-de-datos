@@ -150,7 +150,7 @@ void flight_details(char *flight_id_1, char *flight_id_2, WINDOW *msg_win) {
 
     SQLCHAR aircraft_code[8], scheduled_departure[64], scheduled_arrival[64];
 
-    char result[1024], query[512], temp[512];
+    char result[1024], temp[512];
 
     int i = 0;
 
@@ -161,15 +161,19 @@ void flight_details(char *flight_id_1, char *flight_id_2, WINDOW *msg_win) {
         return;
     }
 
-    /* Allocate a statement handle */
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
 
-    sprintf(query, "SELECT aircraft_code, scheduled_departure, scheduled_arrival \
-                    FROM flights \
-                    WHERE flight_id = %s OR flight_id = %s \
-                    ORDER BY scheduled_departure ASC;", flight_id_1, (flight_id_2[0] != '\0') ? flight_id_2 : "-1");
+    const char *query = "SELECT aircraft_code, scheduled_departure, scheduled_arrival \
+                        FROM flights \
+                        WHERE flight_id = ? OR flight_id = ? \
+                        ORDER BY scheduled_departure ASC;";
 
-    SQLExecDirect(stmt, (SQLCHAR *)query, SQL_NTS);
+    SQLPrepare(stmt, (SQLCHAR *)query, SQL_NTS);
+
+    SQLBindParameter(stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, 0, 0, flight_id_1, 0, NULL);
+    SQLBindParameter(stmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, 0, 0, (flight_id_2[0] != '\0' ? flight_id_2 : "-1"), 0, NULL);
+
+    ret = SQLExecute(stmt);
 
     SQLBindCol(stmt, 1, SQL_C_CHAR, aircraft_code, sizeof(aircraft_code), NULL);
     SQLBindCol(stmt, 2, SQL_C_CHAR, scheduled_departure, sizeof(scheduled_departure), NULL);
@@ -177,7 +181,7 @@ void flight_details(char *flight_id_1, char *flight_id_2, WINDOW *msg_win) {
 
     result[0] = '\0';  
     while (SQL_SUCCEEDED(ret = SQLFetch(stmt))) {
-        sprintf(temp, "(Flight %d) FID: %s, AC: %s, SD: %s, SA: %s\n", i+1, (i == 0) ? flight_id_1 : flight_id_2, aircraft_code, scheduled_departure, scheduled_arrival);
+        sprintf(temp, "(Flight %d) FID: %s, AC: %s, SD: %s, SA: %s\n", i + 1, (i == 0) ? flight_id_1 : flight_id_2, aircraft_code, scheduled_departure, scheduled_arrival);
         strcat(result, temp);
         i++;
     }
@@ -197,6 +201,6 @@ void flight_details(char *flight_id_1, char *flight_id_2, WINDOW *msg_win) {
     /* DISCONNECT */
     ret = odbc_disconnect(env, dbc);
     if (!SQL_SUCCEEDED(ret)) {
-        return ;
+        return;
     }
 }
