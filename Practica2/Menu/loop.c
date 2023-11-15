@@ -255,7 +255,7 @@ void loop(_Windows *windows, _Menus *menus,
             }
             else if ((choice == BPASS) && focus == (FOCUS_RIGHT)) {
                 write_msg(msg_win, (menus->out_win_choices)[out_highlight],
-                          -1, -1, "CREATED BOARDING PASS (PN: Passenger Name, FID: Flight ID, SD: Scheduled Departure, SNO: Seat No)");
+                          -1, -1, "CREATED PASS (PN: Passenger Name, FID: Flight ID, SD: Scheduled Departure, SNO: Seat No)");
             }
         }
         choice = -1;
