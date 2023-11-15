@@ -24,11 +24,13 @@
 #include "loop.h"
 #include "search.h"
 #include "utils.h"
+#include "windows.h"
+#include <sqltypes.h>
 #include <string.h>
 #include <stdio.h>
 
 void loop(_Windows *windows, _Menus *menus,
-          _Forms *forms, _Panels *panels) {
+          _Forms *forms, _Panels *panels, _PreparedStatements *statements) {
     /** get keys pressed by user and process it.
      * - If left/right arrow is pressed  move to
      * the next/previous menu item
@@ -230,7 +232,7 @@ void loop(_Windows *windows, _Menus *menus,
                 tmpStr2 = field_buffer((forms->search_form_items)[3], 0);
                 tmpStr3 = field_buffer((forms->search_form_items)[5], 0);
                 /* aqui se ejecutan los resultados */
-                results_search(tmpStr1, tmpStr2, tmpStr3, &n_out_choices, & (menus->out_win_choices),
+                results_search(statements->flight_connections, tmpStr1, tmpStr2, tmpStr3, &n_out_choices, & (menus->out_win_choices),
                                windows->cols_out_win-4, windows->rows_out_win-2, msg_win, search_flight_ids_1, search_flight_ids_2);
                 print_out(out_win, menus->out_win_choices, n_out_choices,
                           out_highlight, windows->out_title);
@@ -241,10 +243,7 @@ void loop(_Windows *windows, _Menus *menus,
 
             }
             else if ((choice == SEARCH) && (focus == FOCUS_RIGHT)) {
-                /*(void)snprintf(buffer, 128, "flight id 1 is %s, flight id 2 is %s", search_flight_ids_1[out_highlight], search_flight_ids_2[out_highlight]);
-                write_msg(msg_win,buffer,
-                          -1, -1, windows->msg_title);*/
-                flight_details(search_flight_ids_1[out_highlight], search_flight_ids_2[out_highlight], msg_win);
+                flight_details(statements->flights_details, search_flight_ids_1[out_highlight], search_flight_ids_2[out_highlight], msg_win);
             }
             else if ((choice == BPASS) && (focus == FOCUS_LEFT)) {
                 out_highlight = 0;

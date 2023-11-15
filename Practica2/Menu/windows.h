@@ -9,6 +9,7 @@
 #include <form.h>
 #include <menu.h>
 #include <panel.h>
+#include <sqltypes.h>
 #include <stdlib.h>
 #define DEBUG 1
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
@@ -57,6 +58,10 @@ typedef struct _Forms{
     FIELD **search_form_items;
     FIELD **bpass_form_items;
 } _Forms;
+
+typedef struct _PreparedStatements {
+    SQLHSTMT flight_connections, flights_details, booking_check, create_boardin_passes_function, created_boarding_passes;
+} _PreparedStatements;
 
 void _initsrc(_Windows *windows,
               _Menus *menus,

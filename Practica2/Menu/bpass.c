@@ -165,6 +165,7 @@ void    results_bpass(char * bookID,
     if (row_count > 0) {
         /* SQL statement to execute the DO block with parameters */
         SQLPrepare(stmt, (SQLCHAR *)CREATE_BOARDING_PASSES_FUNCTION, SQL_NTS);
+        SQLExecute(stmt);
         SQLCloseCursor(stmt);
 
         SQLPrepare(stmt, (SQLCHAR *)RESULTS_QUERY, SQL_NTS);

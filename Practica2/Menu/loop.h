@@ -18,6 +18,6 @@
 #define FOCUS_RIGHT 1
 
 void loop(_Windows * windows, _Menus  *menus,
-          _Forms *forms, _Panels *panels);
+          _Forms *forms, _Panels *panels, _PreparedStatements *statements);
 
 #endif /* NCOURSES_LOOP_H */

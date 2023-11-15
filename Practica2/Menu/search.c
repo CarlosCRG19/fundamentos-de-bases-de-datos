@@ -54,7 +54,7 @@ const char *QUERY ="SELECT * FROM "
                    "WHERE seats_available > 0 "
                    "ORDER BY scheduled_arrival - scheduled_departure ASC;";
 
-void results_search(char * from, char * to, char * date, int * n_choices,
+void results_search(SQLHSTMT stmt, char * from, char * to, char * date, int * n_choices,
                     char *** choices, int max_length, int max_rows, WINDOW *msg_win, char ** search_flight_ids_1, char ** search_flight_ids_2)
    /**here you need to do your query and fill the choices array of strings
  *
@@ -66,28 +66,11 @@ void results_search(char * from, char * to, char * date, int * n_choices,
  * @param max_rows output win maximum number of rows
   */
 {
-    SQLHENV env;
-    SQLHDBC dbc;
-    SQLHSTMT stmt;
-    SQLRETURN ret; /* ODBC API return status */
-
     SQLCHAR scheduled_departure[64], scheduled_arrival[64];
     SQLINTEGER n_connections, n_availabe_seats, flight_id_1, flight_id_2;
     SQLLEN row_count;
 
     char result[512];
-
-    /* CONNECT */
-    ret = odbc_connect(&env, &dbc);
-    if (!SQL_SUCCEEDED(ret)) {
-        write_error(msg_win, "could not connect to database");
-        return;
-    }
-
-    /* Allocate a statement handle */
-    SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
-
-    SQLPrepare(stmt, (SQLCHAR *)QUERY, SQL_NTS);
 
     /* Bind parameters */
     SQLBindParameter(stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, sizeof(from), 0, from, sizeof(from), NULL);
@@ -108,7 +91,7 @@ void results_search(char * from, char * to, char * date, int * n_choices,
 
     /* Fetch and process the results */
     *n_choices = 0;
-    while (SQL_SUCCEEDED(ret = SQLFetch(stmt))) {
+    while (SQL_SUCCEEDED(SQLFetch(stmt))) {
         if (*n_choices < max_rows) {
             /* Allocate memory for the current choice */
             (*choices)[*n_choices] = (char*)malloc(max_length * sizeof(char));
@@ -131,56 +114,24 @@ void results_search(char * from, char * to, char * date, int * n_choices,
     }
 
     SQLCloseCursor(stmt);
-
-    /* free up statement handle */
-    SQLFreeHandle(SQL_HANDLE_STMT, stmt);
-
-    /* DISCONNECT */
-    ret = odbc_disconnect(env, dbc);
-    if (!SQL_SUCCEEDED(ret)) {
-        return ;
-    }
 }
 
-void flight_details(char *flight_id_1, char *flight_id_2, WINDOW *msg_win) {
-    SQLHENV env;
-    SQLHDBC dbc;
-    SQLHSTMT stmt;
-    SQLRETURN ret; /* ODBC API return status */
-
+void flight_details(SQLHSTMT stmt, char *flight_id_1, char *flight_id_2, WINDOW *msg_win) {
     SQLCHAR aircraft_code[8], scheduled_departure[64], scheduled_arrival[64];
-
     char result[1024], temp[512];
-
     int i = 0;
-
-    /* CONNECT */
-    ret = odbc_connect(&env, &dbc);
-    if (!SQL_SUCCEEDED(ret)) {
-        write_error(msg_win, "could not connect to database");
-        return;
-    }
-
-    SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
-
-    const char *query = "SELECT aircraft_code, scheduled_departure, scheduled_arrival \
-                        FROM flights \
-                        WHERE flight_id = ? OR flight_id = ? \
-                        ORDER BY scheduled_departure ASC;";
-
-    SQLPrepare(stmt, (SQLCHAR *)query, SQL_NTS);
 
     SQLBindParameter(stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, 0, 0, flight_id_1, 0, NULL);
     SQLBindParameter(stmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, 0, 0, (flight_id_2[0] != '\0' ? flight_id_2 : "-1"), 0, NULL);
 
-    ret = SQLExecute(stmt);
+    SQLExecute(stmt);
 
     SQLBindCol(stmt, 1, SQL_C_CHAR, aircraft_code, sizeof(aircraft_code), NULL);
     SQLBindCol(stmt, 2, SQL_C_CHAR, scheduled_departure, sizeof(scheduled_departure), NULL);
     SQLBindCol(stmt, 3, SQL_C_CHAR, scheduled_arrival, sizeof(scheduled_arrival), NULL);
 
     result[0] = '\0';  
-    while (SQL_SUCCEEDED(ret = SQLFetch(stmt))) {
+    while (SQL_SUCCEEDED(SQLFetch(stmt))) {
         sprintf(temp, "(Flight %d) FID: %s, AC: %s, SD: %s, SA: %s\n", i + 1, (i == 0) ? flight_id_1 : flight_id_2, aircraft_code, scheduled_departure, scheduled_arrival);
         strcat(result, temp);
         i++;
@@ -194,13 +145,4 @@ void flight_details(char *flight_id_1, char *flight_id_2, WINDOW *msg_win) {
     }
 
     SQLCloseCursor(stmt);
-
-    /* free up statement handle */
-    SQLFreeHandle(SQL_HANDLE_STMT, stmt);
-
-    /* DISCONNECT */
-    ret = odbc_disconnect(env, dbc);
-    if (!SQL_SUCCEEDED(ret)) {
-        return;
-    }
 }
