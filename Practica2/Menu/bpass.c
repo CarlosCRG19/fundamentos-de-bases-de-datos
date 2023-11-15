@@ -135,7 +135,6 @@ void    results_bpass(char * bookID,
     SQLCHAR passenger_name[32], flight_id[32], scheduled_departure[64], seat_no[64];
     SQLLEN row_count;
 
-    char query[4000];
     char result[512];
 
     trim_trailing(bookID); /* Remove white spaces from `bookID` */
@@ -156,7 +155,6 @@ void    results_bpass(char * bookID,
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
 
     /* Check if booking with such booking ID exists */
-
     SQLPrepare(stmt, (SQLCHAR *)BOOKINGS_QUERY, SQL_NTS);
     SQLBindParameter(stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, sizeof(bookID), 0, bookID, sizeof(bookID), NULL);
     SQLExecute(stmt);

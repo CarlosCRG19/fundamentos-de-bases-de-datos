@@ -2,11 +2,6 @@
 #include "odbc.h"
 #include "windows.h"
 
-/* Auxiliary function to check if a string is empty */
-bool is_empty(char *str) {
-    return strlen(str) == 0 || strspn(str, " ") == strlen(str);
-}
-
 
 /* Auxiliary function to write to the choices displayed on out_window */
 void write_choice(char * choice, char ***choices, int choice_index, int max_length) {

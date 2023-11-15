@@ -216,7 +216,7 @@ void loop(_Windows *windows, _Menus *menus,
                 tmpStr3 = field_buffer((forms->search_form_items)[5], 0);
                 /* aqui se ejecutan los resultados */
                 results_search(tmpStr1, tmpStr2, tmpStr3, &n_out_choices, & (menus->out_win_choices),
-                               windows->cols_out_win-4, windows->rows_out_win-2);
+                               windows->cols_out_win-4, windows->rows_out_win-2, msg_win);
                 print_out(out_win, menus->out_win_choices, n_out_choices,
                           out_highlight, windows->out_title);
                 if ((bool)DEBUG) {

@@ -9,8 +9,6 @@
 #include "windows.h"
 #include "odbc.h"
 
-bool is_empty(char *str);
-
 void write_choice(char * choice, char ***choices, int choice_index, int max_length);
 
 void write_error(WINDOW *msg_window, char *err_msg);
