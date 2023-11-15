@@ -128,7 +128,6 @@ static void init_statements(_PreparedStatements *statements, SQLHDBC dbc) {
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &(statements->flight_connections));
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &(statements->flights_details));
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &(statements->booking_check));
-    SQLAllocHandle(SQL_HANDLE_STMT, dbc, &(statements->create_boardin_passes_function));
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &(statements->created_boarding_passes));
 
     SQLPrepare(statements->flight_connections, (SQLCHAR *)"SELECT * FROM "
