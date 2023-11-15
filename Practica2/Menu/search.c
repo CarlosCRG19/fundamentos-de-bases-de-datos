@@ -19,7 +19,6 @@ void results_search(SQLHSTMT stmt, char * from, char * to, char * date, int * n_
 {
     SQLCHAR scheduled_departure[64], scheduled_arrival[64];
     SQLINTEGER n_connections, n_availabe_seats, flight_id_1, flight_id_2;
-    SQLLEN row_count;
 
     char result[512], missing_fields[124] = "the following fields are missing: ";
 

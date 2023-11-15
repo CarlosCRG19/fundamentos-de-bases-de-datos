@@ -33,106 +33,6 @@
 #include "utils.h"
 #include "windows.h"
 
-const char* _CREATE_BOARDING_PASSES_FUNCTION= "CREATE OR REPLACE FUNCTION create_boarding_passes(book_ref_param TEXT) "
-                                          "RETURNS TABLE ( "
-                                          "    passenger_name TEXT, "
-                                          "    flight_id INT, "
-                                          "    scheduled_departure TIMESTAMP WITH TIME ZONE, "
-                                          "    seat_no CHAR VARYING(4) "
-                                          ") "
-                                          "AS $$ "
-                                          "DECLARE "
-                                          "    ticket_flight_without_boarding_pass RECORD; "
-                                          "    available_seat_no CHAR VARYING(4); "
-                                          "    last_boarding_no INT; "
-                                          "BEGIN "
-                                          "    -- drop the results table if it exists "
-                                          "    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'results') THEN "
-                                          "        DROP TABLE results; "
-                                          "    END IF; "
-                                          " "
-                                          "    -- temporary table to store the data of created boarding passes "
-                                          "    CREATE TEMPORARY TABLE results ( "
-                                          "        passenger_name TEXT, "
-                                          "        flight_id INT, "
-                                          "        scheduled_departure TIMESTAMP WITH TIME ZONE, "
-                                          "        seat_no CHAR VARYING(4) "
-                                          "    ); "
-                                          " "
-                                          "    -- main iteration "
-                                          "    FOR ticket_flight_without_boarding_pass IN ( "
-                                          "        -- query to get all flight tickets that do "
-                                          "        -- not have an associated boarding pass "
-                                          "        SELECT "
-                                          "            tf.flight_id, "
-                                          "            tf.ticket_no, "
-                                          "            t.passenger_name "
-                                          "        FROM "
-                                          "            ticket_flights tf "
-                                          "            NATURAL JOIN tickets t "
-                                          "            LEFT JOIN boarding_passes bp "
-                                          "            ON bp.flight_id = tf.flight_id AND bp.ticket_no = tf.ticket_no "
-                                          "        WHERE "
-                                          "            bp.flight_id IS NULL AND bp.ticket_no IS NULL AND t.book_ref = book_ref_param "
-                                          "        ORDER BY tf.ticket_no ASC -- order according to instructions "
-                                          "    ) LOOP "
-                                          "        -- query to get the first available seat on the flight "
-                                          "        SELECT s.seat_no "
-                                          "        FROM seats s "
-                                          "        WHERE s.aircraft_code IN ( "
-                                          "            SELECT f.aircraft_code "
-                                          "            FROM flights f "
-                                          "            WHERE f.flight_id = ticket_flight_without_boarding_pass.flight_id "
-                                          "        ) "
-                                          "        AND NOT EXISTS( "
-                                          "            -- exclude all seats that are already assigned "
-                                          "            SELECT 1 "
-                                          "            FROM boarding_passes bp "
-                                          "            WHERE bp.flight_id = ticket_flight_without_boarding_pass.flight_id "
-                                          "            AND bp.seat_no = s.seat_no "
-                                          "        ) "
-                                          "        ORDER BY s.seat_no ASC, s.aircraft_code ASC "
-                                          "        LIMIT 1 INTO available_seat_no; "
-                                          " "
-                                          "        -- query to get the last boarding pass number "
-                                          "        -- associated with the flight "
-                                          "        SELECT COALESCE(MAX(boarding_no), 0) "
-                                          "        INTO last_boarding_no "
-                                          "        FROM boarding_passes bp "
-                                          "        WHERE bp.flight_id = ticket_flight_without_boarding_pass.flight_id; "
-                                          " "
-                                          "        -- create new boarding pass assigning the found "
-                                          "        -- available seat to the ticket flight "
-                                          "        INSERT INTO boarding_passes (ticket_no, flight_id, boarding_no, seat_no) "
-                                          "        VALUES ( "
-                                          "            ticket_flight_without_boarding_pass.ticket_no, "
-                                          "            ticket_flight_without_boarding_pass.flight_id, "
-                                          "            last_boarding_no + 1, "
-                                          "            available_seat_no "
-                                          "        ); "
-                                          " "
-                                          "        -- save created boarding pass into results table "
-                                          "        INSERT INTO results (passenger_name, flight_id, scheduled_departure, seat_no) "
-                                          "            SELECT "
-                                          "              t.passenger_name, "
-                                          "              tf.flight_id, "
-                                          "              f.scheduled_departure, "
-                                          "              bp.seat_no "
-                                          "            FROM "
-                                          "              tickets t "
-                                          "              NATURAL JOIN ticket_flights tf "
-                                          "              NATURAL JOIN flights f "
-                                          "              NATURAL JOIN boarding_passes bp "
-                                          "            WHERE "
-                                          "              tf.ticket_no = ticket_flight_without_boarding_pass.ticket_no AND tf.flight_id = ticket_flight_without_boarding_pass.flight_id "
-                                          "            LIMIT 1; "
-                                          "    END LOOP; "
-                                          " "
-                                          "    -- return the contents of the results table "
-                                          "    RETURN QUERY SELECT * FROM results; "
-                                          "END; "
-                                          "$$ LANGUAGE plpgsql;";
-
 static void init_struct(_Windows *windows, __attribute__((unused)) _Panels *panels,
                  _Menus *menus, _Forms *forms)
 /** Functions that initialices windows, menus, forms, etc. Note that the initializacion is
@@ -291,6 +191,134 @@ static void init_statements(_PreparedStatements *statements, SQLHDBC dbc) {
     SQLPrepare(statements->created_boarding_passes, (SQLCHAR *)"SELECT * FROM create_boarding_passes(?);", SQL_NTS);
 }
 
+static void init_create_boarding_passes_function() {
+    SQLHENV env;
+    SQLHDBC dbc;
+    SQLHSTMT stmt;
+    SQLRETURN ret; /* ODBC API return status */
+
+    /* CONNECT */
+    ret = odbc_connect(&env, &dbc);
+    if (!SQL_SUCCEEDED(ret)) {
+        return;
+    }
+
+    /* Allocate a statement handle */
+    SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
+    /* SQL statement to execute the DO block with parameters */
+    SQLPrepare(stmt, (SQLCHAR *)"CREATE OR REPLACE FUNCTION create_boarding_passes(book_ref_param TEXT) "
+                                          "RETURNS TABLE ( "
+                                          "    passenger_name TEXT, "
+                                          "    flight_id INT, "
+                                          "    scheduled_departure TIMESTAMP WITH TIME ZONE, "
+                                          "    seat_no CHAR VARYING(4) "
+                                          ") "
+                                          "AS $$ "
+                                          "DECLARE "
+                                          "    ticket_flight_without_boarding_pass RECORD; "
+                                          "    available_seat_no CHAR VARYING(4); "
+                                          "    last_boarding_no INT; "
+                                          "BEGIN "
+                                          "    -- drop the results table if it exists "
+                                          "    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'results') THEN "
+                                          "        DROP TABLE results; "
+                                          "    END IF; "
+                                          " "
+                                          "    -- temporary table to store the data of created boarding passes "
+                                          "    CREATE TEMPORARY TABLE results ( "
+                                          "        passenger_name TEXT, "
+                                          "        flight_id INT, "
+                                          "        scheduled_departure TIMESTAMP WITH TIME ZONE, "
+                                          "        seat_no CHAR VARYING(4) "
+                                          "    ); "
+                                          " "
+                                          "    -- main iteration "
+                                          "    FOR ticket_flight_without_boarding_pass IN ( "
+                                          "        -- query to get all flight tickets that do "
+                                          "        -- not have an associated boarding pass "
+                                          "        SELECT "
+                                          "            tf.flight_id, "
+                                          "            tf.ticket_no, "
+                                          "            t.passenger_name "
+                                          "        FROM "
+                                          "            ticket_flights tf "
+                                          "            NATURAL JOIN tickets t "
+                                          "            LEFT JOIN boarding_passes bp "
+                                          "            ON bp.flight_id = tf.flight_id AND bp.ticket_no = tf.ticket_no "
+                                          "        WHERE "
+                                          "            bp.flight_id IS NULL AND bp.ticket_no IS NULL AND t.book_ref = book_ref_param "
+                                          "        ORDER BY tf.ticket_no ASC -- order according to instructions "
+                                          "    ) LOOP "
+                                          "        -- query to get the first available seat on the flight "
+                                          "        SELECT s.seat_no "
+                                          "        FROM seats s "
+                                          "        WHERE s.aircraft_code IN ( "
+                                          "            SELECT f.aircraft_code "
+                                          "            FROM flights f "
+                                          "            WHERE f.flight_id = ticket_flight_without_boarding_pass.flight_id "
+                                          "        ) "
+                                          "        AND NOT EXISTS( "
+                                          "            -- exclude all seats that are already assigned "
+                                          "            SELECT 1 "
+                                          "            FROM boarding_passes bp "
+                                          "            WHERE bp.flight_id = ticket_flight_without_boarding_pass.flight_id "
+                                          "            AND bp.seat_no = s.seat_no "
+                                          "        ) "
+                                          "        ORDER BY s.seat_no ASC, s.aircraft_code ASC "
+                                          "        LIMIT 1 INTO available_seat_no; "
+                                          " "
+                                          "        -- query to get the last boarding pass number "
+                                          "        -- associated with the flight "
+                                          "        SELECT COALESCE(MAX(boarding_no), 0) "
+                                          "        INTO last_boarding_no "
+                                          "        FROM boarding_passes bp "
+                                          "        WHERE bp.flight_id = ticket_flight_without_boarding_pass.flight_id; "
+                                          " "
+                                          "        -- create new boarding pass assigning the found "
+                                          "        -- available seat to the ticket flight "
+                                          "        INSERT INTO boarding_passes (ticket_no, flight_id, boarding_no, seat_no) "
+                                          "        VALUES ( "
+                                          "            ticket_flight_without_boarding_pass.ticket_no, "
+                                          "            ticket_flight_without_boarding_pass.flight_id, "
+                                          "            last_boarding_no + 1, "
+                                          "            available_seat_no "
+                                          "        ); "
+                                          " "
+                                          "        -- save created boarding pass into results table "
+                                          "        INSERT INTO results (passenger_name, flight_id, scheduled_departure, seat_no) "
+                                          "            SELECT "
+                                          "              t.passenger_name, "
+                                          "              tf.flight_id, "
+                                          "              f.scheduled_departure, "
+                                          "              bp.seat_no "
+                                          "            FROM "
+                                          "              tickets t "
+                                          "              NATURAL JOIN ticket_flights tf "
+                                          "              NATURAL JOIN flights f "
+                                          "              NATURAL JOIN boarding_passes bp "
+                                          "            WHERE "
+                                          "              tf.ticket_no = ticket_flight_without_boarding_pass.ticket_no AND tf.flight_id = ticket_flight_without_boarding_pass.flight_id "
+                                          "            LIMIT 1; "
+                                          "    END LOOP; "
+                                          " "
+                                          "    -- return the contents of the results table "
+                                          "    RETURN QUERY SELECT * FROM results; "
+                                          "END; "
+                                          "$$ LANGUAGE plpgsql;", SQL_NTS);
+    SQLExecute(stmt);
+    SQLCloseCursor(stmt);
+
+
+    /* free up statement handle */
+    SQLFreeHandle(SQL_HANDLE_STMT, stmt);
+
+    /* DISCONNECT */
+    ret = odbc_disconnect(env, dbc);
+    if (!SQL_SUCCEEDED(ret)) {
+        return ;
+    }
+}
+
 static void free_struct(_Windows windows, _Panels panels,
                  _Menus menus, _Forms forms)
      /** free memory related with structures windows,
@@ -404,6 +432,7 @@ int main() {
     }
 
     init_statements(&statements, dbc);
+    init_create_boarding_passes_function();
 
     /* process keyboard */
     loop(&windows, &menus, &forms, &panels, &statements);
