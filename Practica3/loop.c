@@ -1,9 +1,8 @@
 #include "loop.h"
 
 void process_command(const char *command, const char *ordering_strategy, const char *filename) {
-    /** You can add more commands and their corresponding actions here **/
     if (strncmp(command, "add", 3) == 0) {
-        /** Implement the logic for the "add" command **/
+        /** TODO: Implement the logic for the "add" command **/
         printf("Adding a book to %s with ordering strategy %s.\n", filename, ordering_strategy);
     } else if (strcmp(command, "exit") == 0) {
         /** Inform the user that the program will exit **/
