@@ -23,6 +23,3 @@ clean:
 
 run:
 	./$(EXE)
-
-
-

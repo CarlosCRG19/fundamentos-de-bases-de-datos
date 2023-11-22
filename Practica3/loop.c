@@ -1,8 +1,13 @@
 #include "loop.h"
 
-void process_command(const char *command, const char *ordering_strategy, const char *filename) {
+void process_command(char *command, char *ordering_strategy, const char *filename) {
     if (strncmp(command, "add", 3) == 0) {
         /** TODO: Implement the logic for the "add" command **/
+        char *token = strtok(command, " ");
+
+        if (token != NULL) {
+
+        }
         printf("Adding a book to %s with ordering strategy %s.\n", filename, ordering_strategy);
     } else if (strcmp(command, "exit") == 0) {
         /** Inform the user that the program will exit **/
