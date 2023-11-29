@@ -11,12 +11,6 @@ struct Book {
     char *publisher;
 };
 
-// Arreglo para almacenar libros
-struct Book books[100];  // Asumiendo que el máximo número de libros es 100
-
-// Contador para el número actual de libros
-int bookCount = 0;
-
 // Función para liberar la memoria asignada a un libro
 void free_book(struct Book *book) {
     free(book->isbn);
@@ -46,8 +40,6 @@ void write_book_to_file(const char *filename, struct Book *book) {
     }
 
     printf("Record with BookID=%d has been added to the database\n", book->bookID);
-    printf("size: #%zu\n", size);
-    printf("title: %s\n", book->title);
     printf("exit\n");
 }
 
@@ -70,7 +62,6 @@ void add_book(const char *add_command, const char* output_filename) {
     add_command += 4;
     strcpy(book_data, add_command);
 
-
     /* Extract bookID */
     char *token = strtok(book_data, "|");
     new_book.bookID = atoi(token);
@@ -87,8 +78,47 @@ void add_book(const char *add_command, const char* output_filename) {
     token = strtok(NULL, "|");
     new_book.publisher = strdup(token);
 
-
     write_book_to_file(output_filename, &new_book);
+}
+
+#include <stdint.h>
+
+// Función para imprimir el offset y el primer valor de cada registro
+void print_records(const char *filename) {
+    FILE *file = fopen(filename, "rb");
+    if (file != NULL) {
+        size_t offset = 0;
+
+        while (1) {
+            size_t size;
+            if (fread(&size, sizeof(size_t), 1, file) != 1) {
+                // No se pudo leer el tamaño, probablemente llegamos al final del archivo
+                break;
+            }
+
+            // Imprimir el offset y el primer valor
+            printf("Offset: %zu\n", offset);
+            printf("Primer valor del registro: ");
+
+            // Leer el registro
+            struct Book temp_book;
+            if (fread(&temp_book, sizeof(struct Book), 1, file) != 1) {
+                perror("Error reading record");
+                break;
+            }
+
+            // Imprimir el primer valor del registro
+            printf("BookID=%d, ISBN=%s, Title=%s, Publisher=%s\n",
+                   temp_book.bookID, temp_book.isbn, temp_book.title, temp_book.publisher);
+
+            // Actualizar el offset para el próximo registro
+            offset += size;
+        }
+
+        fclose(file);
+    } else {
+        perror("Error opening file for reading");
+    }
 }
 
 // Función para procesar comandos
@@ -97,11 +127,13 @@ void process_command(const char *command, const char *ordering_strategy, const c
         add_book(command, filename);
     } else if (strcmp(command, "printInd") == 0) {
         // Imprima la información de los libros almacenados
-        for (int i = 0; i < bookCount; i++) {
-            printf("book #%d\n", i);
-            printf("    key: #%d\n", books[i].bookID);
-            printf("    offset: #%zu\n", i * sizeof(struct Book));
-        }
+        print_records(filename);
+
+        //for (int i = 0; i < bookCount; i++) {
+        //    printf("Entry #%d\n", i);
+        //    printf("    key: #%d\n", books[i].bookID);
+        //    printf("    offset: #%zu\n", i * sizeof(struct Book));
+        //}
     } else if (strcmp(command, "exit") == 0) {
         // Informe al usuario que el programa va a salir
         printf("Exiting the program.\n");
