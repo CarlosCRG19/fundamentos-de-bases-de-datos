@@ -1,10 +1,12 @@
 #include "loop.h"
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // Estructura para almacenar información sobre un libro
 struct Book {
     int bookID;
-    char *isbn;
+    char isbn[16];
     char *title;
     char *publisher;
 };
@@ -23,14 +25,30 @@ void free_book(struct Book *book) {
 }
 
 // Función para escribir libros en un archivo
-void write_book_to_file(const char *filename, struct Book *book, int size) {
+void write_book_to_file(const char *filename, struct Book *book) {
+    size_t size = sizeof(book->bookID) + sizeof(book->isbn) + strlen(book->title) + strlen(book->publisher) + 1;
     FILE *file = fopen(filename, "wb");
+
     if (file != NULL) {
-        fwrite(book, size, 1, file);
+        // Write the size of the book to the file
+        fwrite(&size, sizeof(size_t), 1, file);
+
+        // Write the key, isbn, title, separator, and editorial to the file
+        fwrite(&book->isbn, sizeof(int), 1, file);
+        fwrite(book->isbn, sizeof(char), sizeof(book->isbn), file);
+        fwrite(book->title, sizeof(char), strlen(book->title), file);
+        fwrite("|", sizeof(char), 1, file); // Single '|' separator
+        fwrite(book->publisher, sizeof(char), strlen(book->publisher), file);
+
         fclose(file);
     } else {
         perror("Error opening file for writing");
     }
+
+    printf("Record with BookID=%d has been added to the database\n", book->bookID);
+    printf("size: #%zu\n", size);
+    printf("title: %s\n", book->title);
+    printf("exit\n");
 }
 
 // Función para leer libros desde un archivo
@@ -44,28 +62,43 @@ void read_books_from_file(const char *filename) {
     }
 }
 
+void add_book(const char *add_command, const char* output_filename) {
+    struct Book new_book;
+    char book_data[128];
+
+    /* Skip "add " */
+    add_command += 4;
+    strcpy(book_data, add_command);
+
+
+    /* Extract bookID */
+    char *token = strtok(book_data, "|");
+    new_book.bookID = atoi(token);
+
+    /* Extract ISBN */
+    token = strtok(NULL, "|");
+    strncpy(new_book.isbn, token, sizeof(new_book.isbn));
+
+    /* Extract Title */
+    token = strtok(NULL, "|");
+    new_book.title = strdup(token);
+
+    /* Extract Publisher */
+    token = strtok(NULL, "|");
+    new_book.publisher = strdup(token);
+
+
+    write_book_to_file(output_filename, &new_book);
+}
+
 // Función para procesar comandos
 void process_command(const char *command, const char *ordering_strategy, const char *filename) {
     if (strncmp(command, "add", 3) == 0) {
-        // Parse los datos del libro desde el comando
-        sscanf(command, "add %d|%[^|]|%[^|]|%[^\r]", &books[bookCount].bookID, books[bookCount].isbn, books[bookCount].title, books[bookCount].publisher);
-        int size = sizeof(&books[bookCount].bookID) + sizeof(&books[bookCount].isbn) + sizeof(&books[bookCount].title) + sizeof(&books[bookCount].publisher);
-        write_book_to_file(filename, &books[bookCount], size);
-
-        // Imprima un mensaje indicando que el libro ha sido agregado
-        printf("Record with BookID=%d has been added to the database\n", books[bookCount].bookID);
-        printf("size: #%d\n", size);
-        printf(&books[bookCount].title);
-        printf("a2: %s\n", books[bookCount].title);
-        printf("exit\n");
-
-        // Incremente el contador de libros
-        bookCount++;
-
+        add_book(command, filename);
     } else if (strcmp(command, "printInd") == 0) {
         // Imprima la información de los libros almacenados
         for (int i = 0; i < bookCount; i++) {
-            printf("Entry #%d\n", i);
+            printf("book #%d\n", i);
             printf("    key: #%d\n", books[i].bookID);
             printf("    offset: #%zu\n", i * sizeof(struct Book));
         }
