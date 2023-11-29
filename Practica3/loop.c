@@ -1,4 +1,5 @@
 #include "loop.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,17 +19,25 @@ void free_book(struct Book *book) {
     free(book->publisher);
 }
 
+
+FILE *open_db_file(const char *filename, const char *mode) {
+    char filename_with_extension[128];
+    snprintf(filename_with_extension, sizeof(filename_with_extension), "%s.db", filename);
+
+    return fopen(filename_with_extension, mode);
+}
+
 // Función para escribir libros en un archivo
 void write_book_to_file(const char *filename, struct Book *book) {
     size_t size = sizeof(book->bookID) + sizeof(book->isbn) + strlen(book->title) + strlen(book->publisher) + 1;
-    FILE *file = fopen(filename, "wb");
+    FILE *file = open_db_file(filename, "ab");
 
     if (file != NULL) {
         // Write the size of the book to the file
         fwrite(&size, sizeof(size_t), 1, file);
 
         // Write the key, isbn, title, separator, and editorial to the file
-        fwrite(&book->isbn, sizeof(int), 1, file);
+        fwrite(&book->bookID, sizeof(int), 1, file);
         fwrite(book->isbn, sizeof(char), sizeof(book->isbn), file);
         fwrite(book->title, sizeof(char), strlen(book->title), file);
         fwrite("|", sizeof(char), 1, file); // Single '|' separator
@@ -40,18 +49,6 @@ void write_book_to_file(const char *filename, struct Book *book) {
     }
 
     printf("Record with BookID=%d has been added to the database\n", book->bookID);
-    printf("exit\n");
-}
-
-// Función para leer libros desde un archivo
-void read_books_from_file(const char *filename) {
-    FILE *file = fopen(filename, "rb");
-    if (file != NULL) {
-        bookCount = fread(books, sizeof(struct Book), 100, file);  // Use 100 as the maximum number of elements
-        fclose(file);
-    } else {
-        perror("Error opening file for reading");
-    }
 }
 
 void add_book(const char *add_command, const char* output_filename) {
@@ -81,38 +78,43 @@ void add_book(const char *add_command, const char* output_filename) {
     write_book_to_file(output_filename, &new_book);
 }
 
-#include <stdint.h>
 
 // Función para imprimir el offset y el primer valor de cada registro
-void print_records(const char *filename) {
-    FILE *file = fopen(filename, "rb");
-    if (file != NULL) {
-        size_t offset = 0;
+void print_index(const char *filename) {
+    FILE *file = open_db_file(filename, "rb");
 
-        while (1) {
+    if (file != NULL) {
+        int book_number = 0;
+
+        while (!feof(file)) {
             size_t size;
-            if (fread(&size, sizeof(size_t), 1, file) != 1) {
+            int book_id, book_offset = ftell(file);
+
+            if (fread(&size, sizeof(size_t), 1, file) != 1 || feof(file)) {
                 // No se pudo leer el tamaño, probablemente llegamos al final del archivo
                 break;
             }
 
-            // Imprimir el offset y el primer valor
-            printf("Offset: %zu\n", offset);
-            printf("Primer valor del registro: ");
+            printf("Entry #%d\n", book_number);
 
-            // Leer el registro
-            struct Book temp_book;
-            if (fread(&temp_book, sizeof(struct Book), 1, file) != 1) {
-                perror("Error reading record");
-                break;
+            /* Create entry to store book data */
+            char *buffer = (char *)malloc(size);
+            if (buffer == NULL) {
+                fprintf(stderr, "Memory allocation error.\n");
+                exit(EXIT_FAILURE);
             }
 
-            // Imprimir el primer valor del registro
-            printf("BookID=%d, ISBN=%s, Title=%s, Publisher=%s\n",
-                   temp_book.bookID, temp_book.isbn, temp_book.title, temp_book.publisher);
+            /* Extract entire book entry */
+            fread(buffer, 1, size, file);
 
-            // Actualizar el offset para el próximo registro
-            offset += size;
+            /* Copy book key */
+            memcpy(&book_id, buffer, sizeof(int));
+
+            // Imprimir el offset y el primer valor
+            printf("    key: #%d\n", book_id);
+            printf("    offset: #%d\n", book_offset);
+
+            book_number++;
         }
 
         fclose(file);
@@ -125,9 +127,11 @@ void print_records(const char *filename) {
 void process_command(const char *command, const char *ordering_strategy, const char *filename) {
     if (strncmp(command, "add", 3) == 0) {
         add_book(command, filename);
+        printf("exit\n");
     } else if (strcmp(command, "printInd") == 0) {
         // Imprima la información de los libros almacenados
-        print_records(filename);
+        print_index(filename);
+        printf("exit\n");
 
         //for (int i = 0; i < bookCount; i++) {
         //    printf("Entry #%d\n", i);
@@ -145,8 +149,6 @@ void process_command(const char *command, const char *ordering_strategy, const c
 
 // Función principal del bucle
 void loop(const char *ordering_strategy, const char *filename) {
-    read_books_from_file(filename);
-
     /** Buffer to store user input **/
     char command_buffer[100];
 
@@ -166,9 +168,9 @@ void loop(const char *ordering_strategy, const char *filename) {
         /** Check if the user entered the "exit" command **/
         if (strcmp(command_buffer, "exit") == 0) {
             // Liberar memoria antes de salir
-            for (int i = 0; i < bookCount; i++) {
-                free_book(&books[i]);
-            }
+            //for (int i = 0; i < bookCount; i++) {
+                //free_book(&books[i]);
+            //}
             break; /** Exit the loop **/
         }
     }
