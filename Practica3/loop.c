@@ -19,7 +19,6 @@ void free_book(struct Book *book) {
     free(book->publisher);
 }
 
-
 FILE *open_db_file(const char *filename, const char *mode) {
     char filename_with_extension[128];
     snprintf(filename_with_extension, sizeof(filename_with_extension), "%s.db", filename);
@@ -132,15 +131,9 @@ void process_command(const char *command, const char *ordering_strategy, const c
         // Imprima la información de los libros almacenados
         print_index(filename);
         printf("exit\n");
-
-        //for (int i = 0; i < bookCount; i++) {
-        //    printf("Entry #%d\n", i);
-        //    printf("    key: #%d\n", books[i].bookID);
-        //    printf("    offset: #%zu\n", i * sizeof(struct Book));
-        //}
     } else if (strcmp(command, "exit") == 0) {
         // Informe al usuario que el programa va a salir
-        printf("Exiting the program.\n");
+        printf("all done\n");
     } else {
         // Maneje comandos no reconocidos
         printf("Unrecognized command: %s\n", command);
@@ -165,12 +158,7 @@ void loop(const char *ordering_strategy, const char *filename) {
         /** Process the entered command **/
         process_command(command_buffer, ordering_strategy, filename);
 
-        /** Check if the user entered the "exit" command **/
         if (strcmp(command_buffer, "exit") == 0) {
-            // Liberar memoria antes de salir
-            //for (int i = 0; i < bookCount; i++) {
-                //free_book(&books[i]);
-            //}
             break; /** Exit the loop **/
         }
     }
