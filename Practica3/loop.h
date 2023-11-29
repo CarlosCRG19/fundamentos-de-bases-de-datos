@@ -18,6 +18,6 @@ void loop(const char *ordering_strategy, const char *filename);
  * @param ordering_strategy: Strategy for ordering
  * @param filename: Name of the file
  **/
-void process_command(char *command, char *ordering_strategy, const char *filename);
+void process_command(const char *command, const char *ordering_strategy, const char *filename);
 
 #endif /* LOOP_H */
