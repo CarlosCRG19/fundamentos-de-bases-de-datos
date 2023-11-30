@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
     const char *valid_strategies[] = {"best_fit", "worst_fit", "first_fit"};
     int is_valid_strategy = 0;
 
-    for (int i = 0; i < sizeof(valid_strategies) / sizeof(valid_strategies[0]); ++i) {
+    for (int i = 0; i < (int)(sizeof(valid_strategies) / sizeof(valid_strategies[0])); ++i) {
         if (strcmp(ordering_strategy, valid_strategies[i]) == 0) {
             is_valid_strategy = 1;
             break;
@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
     printf("Type command and argument/s.\n");
     printf("exit\n");
 
+    /** Cycled function that controls user interaction **/
     loop(ordering_strategy, filename);
 
     return 1; /** Return success code **/

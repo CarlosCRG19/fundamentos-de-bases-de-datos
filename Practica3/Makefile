@@ -2,10 +2,10 @@ CC = gcc -g
 CFLAGS = -Wall -Wextra -pedantic
 
 # recompile if this header changes
-HEADERS = library.h loop.h
+HEADERS = library.h commands.h loop.h
 
 EXE = library
-OBJ = $(EXE).o loop.o
+OBJ = $(EXE).o commands.o loop.o
 
 compile : $(EXE)
 
