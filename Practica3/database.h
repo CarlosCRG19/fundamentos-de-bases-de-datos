@@ -2,9 +2,14 @@
 #define DATABASE_H
 
 #include "book.h"
+#include "enums.h"
 
 typedef struct Database {
     Book **books;
+    char *filename;
+    enum OrderingStrategy ordering_strategy;
 } Database;
+
+Database* Database_new(enum OrderingStrategy ordering_strategy, char *filename);
 
 #endif /* DATABASE_H */

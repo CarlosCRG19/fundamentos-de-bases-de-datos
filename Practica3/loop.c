@@ -1,3 +1,4 @@
+#include "loop.h"
 #include "commands.h"
 
 /**
@@ -6,14 +7,14 @@
  * @param ordering_strategy: Selected book ordering strategy
  * @param filename: Name of the file storing book data
  */
-void process_command(const char *command, const char *ordering_strategy, const char *filename) {
+void process_command(const char *command, Database* database) {
     if (strncmp(command, "add", 3) == 0) {
-        add_book(command, filename);
+        add_book(command, database->filename);
         printf("exit\n");  /* Notify the user of command completion */
     } 
     else if (strcmp(command, "printInd") == 0) {
         /* Print information about the stored books */
-        print_index(filename);
+        print_index(database->filename);
         printf("exit\n");  /* Notify the user of command completion */
     } 
     else if (strcmp(command, "exit") == 0) {
@@ -30,7 +31,7 @@ void process_command(const char *command, const char *ordering_strategy, const c
  * @param ordering_strategy: Selected book ordering strategy
  * @param filename: Name of the file storing book data
  */
-void loop(const char *ordering_strategy, const char *filename) {
+void loop(Database* database) {
     char command_buffer[100];
 
     /* Continue looping until the user enters the 'exit' command */
@@ -44,7 +45,7 @@ void loop(const char *ordering_strategy, const char *filename) {
         /* Remove newline character from input */
         command_buffer[strcspn(command_buffer, "\n")] = '\0';
 
-        process_command(command_buffer, ordering_strategy, filename);
+        process_command(command_buffer, database);
 
         /* Check if the user entered the 'exit' command to break out of the loop */
         if (strcmp(command_buffer, "exit") == 0) {

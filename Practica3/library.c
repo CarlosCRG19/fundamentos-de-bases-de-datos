@@ -1,3 +1,4 @@
+#include "database.h"
 #include "enums.h"
 #include "loop.h"
 
@@ -27,8 +28,8 @@ int main(int argc, char *argv[]) {
     }
 
     /** Extract the arguments **/
-    const char *ordering_strategy_str = argv[1];
-    const char *filename = argv[2];
+    char *ordering_strategy_str = argv[1];
+    char *filename = argv[2];
 
     enum OrderingStrategy ordering_strategy = to_ordering_stratregy(ordering_strategy_str);
 
@@ -40,8 +41,13 @@ int main(int argc, char *argv[]) {
     printf("Type command and argument/s.\n");
     printf("exit\n");
 
+    /** Create new database **/
+    Database* database = Database_new(ordering_strategy, filename);
+
     /** Cycled function that controls user interaction **/
-    loop(ordering_strategy_str, filename);
+    loop(database);
+
+    /** TODO: Free database **/
 
     return 1; /** Return success code **/
 }

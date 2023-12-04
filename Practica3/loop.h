@@ -10,12 +10,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "database.h"
+
 /**
  * Main loop for user interaction.
  * @param ordering_strategy: Selected book ordering strategy
  * @param filename: Name of the file storing book data
  */
-void loop(const char *ordering_strategy, const char *filename);
+void loop(Database* database);
 
 /**
  * Process the user command.
@@ -23,6 +25,6 @@ void loop(const char *ordering_strategy, const char *filename);
  * @param ordering_strategy: Selected book ordering strategy
  * @param filename: Name of the file storing book data
  */
-void process_command(const char *command, const char *ordering_strategy, const char *filename);
+void process_command(const char *command, Database* database);
 
 #endif /* LOOP_H */
