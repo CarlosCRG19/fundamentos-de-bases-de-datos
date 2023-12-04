@@ -4,7 +4,7 @@
 #include "book.h"
 
 typedef struct Database {
-    book **books;
-} database;
+    Book **books;
+} Database;
 
 #endif /* DATABASE_H */

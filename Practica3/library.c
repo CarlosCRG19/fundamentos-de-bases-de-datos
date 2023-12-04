@@ -1,4 +1,17 @@
+#include "enums.h"
 #include "loop.h"
+
+enum OrderingStrategy to_ordering_stratregy(const char *strategy_str) {
+    if (strcmp(strategy_str, "best_fit") == 0) {
+        return BEST_FIT;
+    } else if (strcmp(strategy_str, "worst_fit") == 0) {
+        return WORST_FIT;
+    } else if (strcmp(strategy_str, "first_fit") == 0) {
+        return FIRST_FIT;
+    } else {
+        return UNKNOWN_STRATEGY;
+    }
+}
 
 /**
  * Main function that accepts two command-line arguments:
@@ -14,21 +27,13 @@ int main(int argc, char *argv[]) {
     }
 
     /** Extract the arguments **/
-    const char *ordering_strategy = argv[1];
+    const char *ordering_strategy_str = argv[1];
     const char *filename = argv[2];
 
-    const char *valid_strategies[] = {"best_fit", "worst_fit", "first_fit"};
-    int is_valid_strategy = 0;
+    enum OrderingStrategy ordering_strategy = to_ordering_stratregy(ordering_strategy_str);
 
-    for (int i = 0; i < (int)(sizeof(valid_strategies) / sizeof(valid_strategies[0])); ++i) {
-        if (strcmp(ordering_strategy, valid_strategies[i]) == 0) {
-            is_valid_strategy = 1;
-            break;
-        }
-    }
-
-    if (!is_valid_strategy) {
-        printf("Unknown search strategy %s", ordering_strategy);
+    if (ordering_strategy == UNKNOWN_STRATEGY) {
+        printf("Unknown search strategy %s", ordering_strategy_str);
         return 0;  /* Return a non-zero value to indicate an error */
     }
 
@@ -36,7 +41,7 @@ int main(int argc, char *argv[]) {
     printf("exit\n");
 
     /** Cycled function that controls user interaction **/
-    loop(ordering_strategy, filename);
+    loop(ordering_strategy_str, filename);
 
     return 1; /** Return success code **/
 }
