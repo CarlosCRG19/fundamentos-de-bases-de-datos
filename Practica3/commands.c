@@ -112,6 +112,7 @@ void print_index(const char *filename) {
             /* Print the offset and the first value */
             printf("    key: #%d\n", book_id);
             printf("    offset: #%d\n", book_offset);
+            printf("    size: #%zu\n", size);
 
             book_number++;
 
