@@ -16,9 +16,9 @@ FILE *open_db_file(const char *filename, const char *mode) {
 /**
  * Write book information to a database file.
  * @param filename: Name of the database file
- * @param book: Pointer to the Book struct containing book information
+ * @param book: Pointer to the book struct containing book information
  */
-void write_book_to_file(const char *filename, struct Book *book) {
+void write_book_to_file(const char *filename, book *book) {
     /* Calculate the size needed to store book information */
     size_t size = sizeof(book->bookID) + sizeof(book->isbn) + strlen(book->title) + strlen(book->publisher) + 1;
     /* Open the database file in append binary mode */
@@ -49,7 +49,7 @@ void write_book_to_file(const char *filename, struct Book *book) {
  * @param output_filename: Name of the database file
  */
 void add_book(const char *add_command, const char* output_filename) {
-    struct Book new_book;
+    book new_book;
     char book_data[128];
 
     /* Skip "add " */
