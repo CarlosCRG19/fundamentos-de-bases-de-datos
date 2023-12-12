@@ -196,11 +196,12 @@ void save_index(Database* db) {
     FILE* file = fopen(db->index_file, "wb");
 
     for (size_t i = 0; i < index_array->used; ++i) {
-        printf("Entry #%lu\n", i);
         BookIndex* current_index = &index_array->indices[i];
 
         fwrite(&current_index->bookID, sizeof(int), 1, file);
         fwrite(&current_index->offset, sizeof(long int), 1, file);
         fwrite(&current_index->size, sizeof(size_t), 1, file);
     }
+
+    fclose(file);
 }
