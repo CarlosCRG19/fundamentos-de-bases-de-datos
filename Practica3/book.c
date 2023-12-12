@@ -2,14 +2,11 @@
 #include "string.h"
 
 /* Function to create a new Book */
-Book *Book_new(int key, long int offset, size_t size, const char *isbn, const char *title, const char *publisher) {
+Book *Book_new(const int bookID, const char *isbn, const char *title, const char *publisher) {
     Book *new_book = (Book *)malloc(sizeof(Book));
 
     if (new_book != NULL) {
-        new_book->index.key = key;
-        new_book->index.offset = offset;
-        new_book->index.size = size;
-        new_book->bookID = key;
+        new_book->bookID = bookID;
 
         strncpy(new_book->isbn, isbn, sizeof(new_book->isbn) - 1);
         new_book->isbn[sizeof(new_book->isbn) - 1] = '\0'; // Ensure null-termination

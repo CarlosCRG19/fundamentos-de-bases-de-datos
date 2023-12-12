@@ -9,7 +9,7 @@
  */
 void process_command(const char *command, Database* database) {
     if (strncmp(command, "add", 3) == 0) {
-        add_book(command, database->filename);
+        add(database, command);
         printf("exit\n");  /* Notify the user of command completion */
     } 
     else if (strcmp(command, "printInd") == 0) {
@@ -31,7 +31,7 @@ void process_command(const char *command, Database* database) {
  * @param ordering_strategy: Selected book ordering strategy
  * @param filename: Name of the file storing book data
  */
-void loop(Database* database) {
+void loop(Database *database) {
     char command_buffer[100];
 
     /* Continue looping until the user enters the 'exit' command */
