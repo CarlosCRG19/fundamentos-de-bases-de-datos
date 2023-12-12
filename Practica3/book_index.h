@@ -18,14 +18,14 @@ typedef struct {
     size_t size;
 } BookIndexArray;
 
-BookIndex *BookIndex_new(int bookID, long int offset, size_t size);
+BookIndex* BookIndex_new(int bookID, long int offset, size_t size);
 
-BookIndexArray *BookIndexArray_new(size_t initial_size);
+BookIndexArray* BookIndexArray_new(size_t initial_size);
 
-void insert_at(BookIndexArray *array, BookIndex *index, int position);
+void insert_at(BookIndexArray* array, BookIndex* index, int position);
 
-void insert_at_end(BookIndexArray *array, BookIndex *index);
+void insert_at_end(BookIndexArray* array, BookIndex* index);
 
-void free_array(BookIndexArray *array);
+void free_array(BookIndexArray* array);
 
 #endif /* BOOK_INDEX_H */

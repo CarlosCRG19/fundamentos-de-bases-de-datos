@@ -20,9 +20,9 @@ Database* Database_new(enum OrderingStrategy ordering_strategy, char *filename);
 
 int add_book(Database *db, Book *new_book);
 
-BookIndexPosition find_book(int bookID);
+BookIndexPosition find_book(Database *db, int bookID);
 
-Book get_book(BookIndex *book_index);
+Book* get_book(Database *db, BookIndex *book_index);
 
 
 #endif /* DATABASE_H */

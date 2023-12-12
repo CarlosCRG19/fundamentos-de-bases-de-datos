@@ -5,7 +5,7 @@ CFLAGS = -Wall -Wextra -pedantic
 HEADERS = library.h book_index.h database.h commands.h loop.h
 
 EXE = library
-OBJ = $(EXE).o database.o book_index.o commands.o loop.o
+OBJ = $(EXE).o book_index.o database.o commands.o loop.o
 
 compile : $(EXE)
 

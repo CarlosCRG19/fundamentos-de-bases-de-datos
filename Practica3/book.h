@@ -11,6 +11,6 @@ typedef struct {
     char *publisher;
 } Book;
 
-Book *Book_new(const int bookID, const char *isbn, const char *title, const char *publisher);
+Book* Book_new(const int bookID, const char* isbn, const char* title, const char* publisher);
 
 #endif /* BOOK_H */

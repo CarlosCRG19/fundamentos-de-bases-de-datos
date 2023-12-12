@@ -12,9 +12,18 @@ void process_command(const char *command, Database* database) {
         add(database, command);
         printf("exit\n");  /* Notify the user of command completion */
     } 
+    else if (strncmp(command, "find", 4) == 0) {
+        find(database, command);
+        printf("exit\n");  /* Notify the user of command completion */
+    } 
     else if (strcmp(command, "printInd") == 0) {
         /* Print information about the stored books */
-        print_index(database->filename);
+        printInd(database);
+        printf("exit\n");  /* Notify the user of command completion */
+    } 
+    else if (strcmp(command, "printRec") == 0) {
+        /* Print information about the stored books */
+        printRec(database);
         printf("exit\n");  /* Notify the user of command completion */
     } 
     else if (strcmp(command, "exit") == 0) {
@@ -38,7 +47,7 @@ void loop(Database *database) {
     while (1) {
         /* Read user input */
         if (fgets(command_buffer, sizeof(command_buffer), stdin) == NULL) {
-            perror("Error reading input");
+            printf("Error reading input");
             return;
         }
 

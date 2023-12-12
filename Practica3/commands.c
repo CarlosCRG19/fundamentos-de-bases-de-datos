@@ -1,4 +1,5 @@
 #include "commands.h"
+#include "database.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +10,7 @@
  * @param add_command: 'add' command string containing book information
  * @param output_filename: Name of the database file
  */
-void add(Database *db, const char *add_command) {
+void add(Database* db, const char* add_command) {
     Book new_book;
     char book_data[128];
 
@@ -41,5 +42,39 @@ void add(Database *db, const char *add_command) {
     /*write_book_to_file(output_filename, &new_book);*/
 }
 
-void print_index(const char *filename) {
+void find(Database* db, const char* find_command) {
+    int bookID = atoi(find_command + 5);
+    BookIndexPosition bp = find_book(db, bookID);
+
+    if (bp.book_index == NULL) {
+        printf("Record with bookId=%d does not exist\n", bookID);
+        return;
+    }
+
+    Book* found_book = get_book(db, bp.book_index);
+    print_book(found_book);
+}
+
+void printInd(Database* db) {
+    BookIndexArray* index_array = db->index_array;
+
+    for (size_t i = 0; i < index_array->used; ++i) {
+        printf("Entry #%lu\n", i);
+        printf("    key: #%d\n", index_array->indices[i].bookID);
+        printf("    offset: #%ld\n", index_array->indices[i].offset);
+        printf("    size: #%ld\n", index_array->indices[i].size);
+    }
+}
+
+void printRec(Database* db) {
+    BookIndexArray* index_array = db->index_array;
+
+    for (size_t i = 0; i < index_array->used; ++i) {
+        Book* book = get_book(db, &index_array->indices[i]);
+        print_book(book);
+    }
+}
+
+void print_book(Book *book) {
+    printf("%d|%s|%s|%s\n", book->bookID, book->isbn, book->title, book->publisher);
 }

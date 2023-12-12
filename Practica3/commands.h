@@ -8,13 +8,17 @@
  * @param db: Database object 
  * @param add_command: 'add' command string containing book information
  */
-void add(Database *db, const char *add_command);
+void add(Database* db, const char* add_command);
+
+void find(Database* db, const char* find_command);
 
 /**
  * Print the offset and the first value of each record in the database file.
  * @param filename: Name of the database file
  */
-void print_index(const char *filename);
+void printInd(Database* db);
+
+void printRec(Database* db);
 
 void print_book(Book *book);
 
