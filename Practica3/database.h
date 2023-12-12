@@ -6,23 +6,25 @@
 #include "enums.h"
 
 typedef struct {
-    char *filename;
+    char* data_file;
+    char* index_file;
     enum OrderingStrategy ordering_strategy;
-    BookIndexArray *index_array;
+    BookIndexArray* index_array;
 } Database;
 
 typedef struct {
     int position;
-    BookIndex *book_index;
+    BookIndex* book_index;
 } BookIndexPosition;
 
 Database* Database_new(enum OrderingStrategy ordering_strategy, char *filename);
 
-int add_book(Database *db, Book *new_book);
+int add_book(Database* db, Book* new_book);
 
-BookIndexPosition find_book(Database *db, int bookID);
+BookIndexPosition find_book(Database* db, int bookID);
 
-Book* get_book(Database *db, BookIndex *book_index);
+Book* get_book(Database* db, BookIndex* book_index);
 
+void save_index(Database* db);
 
 #endif /* DATABASE_H */

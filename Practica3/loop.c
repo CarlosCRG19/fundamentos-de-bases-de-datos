@@ -58,6 +58,7 @@ void loop(Database *database) {
 
         /* Check if the user entered the 'exit' command to break out of the loop */
         if (strcmp(command_buffer, "exit") == 0) {
+            printf("reached here\n");
             break;
         }
     }

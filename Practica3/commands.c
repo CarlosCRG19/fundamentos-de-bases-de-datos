@@ -39,7 +39,6 @@ void add(Database* db, const char* add_command) {
     } else {
         // handle error
     }
-    /*write_book_to_file(output_filename, &new_book);*/
 }
 
 void find(Database* db, const char* find_command) {

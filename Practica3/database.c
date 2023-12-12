@@ -6,24 +6,20 @@
 
 Database* Database_new(enum OrderingStrategy ordering_strategy, char *filename) {
     Database* db = (Database*)malloc(sizeof(Database));
-    db->filename = filename;
+
+    db->data_file = (char*)malloc(strlen(filename) + 4);  /* ".db" plus null terminator */
+    db->index_file = (char*)malloc(strlen(filename) + 5); /* ".ind" plus null terminator */
+
+    strcpy(db->data_file, filename);
+    strcpy(db->index_file, filename);
+
+    strcat(db->data_file, ".db");
+    strcat(db->index_file, ".ind");
+
     db->ordering_strategy = ordering_strategy;
     db->index_array = BookIndexArray_new(50);
 
     return db;
-}
-
-/**
- * Open or create a database file with the given filename and mode.
- * @param filename: Name of the database file
- * @param mode: File access mode ("r" for read, "w" for write, "a" for append, "b" for binary)
- * @return: FILE pointer to the opened or created file
- */
-FILE* open_db_file(Database *db, const char *mode) {
-    char filename_with_extension[128];
-    snprintf(filename_with_extension, sizeof(filename_with_extension), "%s.db", db->filename);
-
-    return fopen(filename_with_extension, mode);
 }
 
 /**
@@ -35,7 +31,7 @@ BookIndex* write_book_to_disk(Database* db, Book* book) {
     /* Calculate the size needed to store book information */
     size_t size = sizeof(book->bookID) + sizeof(book->isbn) + strlen(book->title) + strlen(book->publisher) + 1;
     /* Open the database file in append binary mode */
-    FILE* file = open_db_file(db, "ab");
+    FILE* file = fopen(db->data_file, "ab");
 
     if (file != NULL) {
         long int offset = ftell(file);
@@ -104,7 +100,7 @@ BookIndexPosition find_book(Database *db, int bookID) {
 }
 
 Book* get_book(Database* db, BookIndex* book_index) {
-    FILE* file = open_db_file(db, "rb");
+    FILE* file = fopen(db->data_file, "rb");
 
     if (file != NULL) {
         // Seek to the offset of the book in the file
@@ -156,4 +152,39 @@ Book* get_book(Database* db, BookIndex* book_index) {
 
     // If there's an error, return NULL
     return NULL;
+}
+
+BookIndexArray* load_index(const char* filename) {
+    FILE* file = fopen(filename, "rb");
+
+    if (file == NULL) {
+        return BookIndexArray_new(0);  // Return an empty BookIndexArray
+    }
+
+    // Allocate memory for BookIndexArray
+    BookIndexArray *index_array = BookIndexArray_new(10);  // Initial guess for size
+    BookIndex *current_index = (BookIndex*)malloc(sizeof(BookIndex));
+
+    // Read BookIndex data from the file until the end
+    while (fread(current_index, sizeof(BookIndex), 1, file) == 1) {
+        insert_at_end(index_array, current_index);
+    }
+
+    fclose(file);
+
+    return index_array;
+}
+
+void save_index(Database* db) {
+    BookIndexArray* index_array = db->index_array;
+    FILE* file = fopen(db->index_file, "wb");
+
+    for (size_t i = 0; i < index_array->used; ++i) {
+        printf("Entry #%lu\n", i);
+        BookIndex* current_index = &index_array->indices[i];
+
+        fwrite(&current_index->bookID, sizeof(int), 1, file);
+        fwrite(&current_index->offset, sizeof(long int), 1, file);
+        fwrite(&current_index->size, sizeof(size_t), 1, file);
+    }
 }
