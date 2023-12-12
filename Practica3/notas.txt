@@ -1,0 +1,67 @@
+* Almacenamiento como registros binarios
+* indice en memoria con funcionalidades
+    - busqueda
+    - borrado
+    - insercion
+
+* base de datos de una biblioteca
+* cada libro tiene cuatro campos
+    - bookID (integer)
+    - ISBN (char[16])
+    - title (varchar) -> tamano maximo de 128 caracteres
+    - printedBy (varchar) -> tamano maximo de 128 caracteres
+
+* indice
+    - contiene tres elementos
+        - key integer 
+        - offset long integer 
+        - size_t size
+    - se almacena en memoria
+    - los registros deben de estar ordenados con base en la key
+    - se debe poder implementar un find
+    - debe permitir la expansion dinamica
+
+* interfaz de usuario
+    - crear un ejecutable library
+    - primer parametro, estrategia de ordenamiento
+    - segundo parametro es el nombre de los ficheros del programa
+    - debe entender comandos
+        - add
+            aniade un libro y actualiza el indice
+            Ex. add 12345|978-2-12345680-3|El Quijote|catedra
+
+            se debe buscar en indice con busqueda binaria, si la clave ya existe se debe escribir en pantalla: Record with BookID=XXXX exists
+
+            inicialmente, aniadir el registro al final del fichero de datos
+
+            actualizar el indice
+
+            se debe imprimir un mensaje confirmado la insercion del libro: Record with BookID=12345 has been added to the database
+
+        - find
+            recibe como parametro un registro y lo imprime en pantalla 
+
+            Ex. find 12345
+            Ex. Out. 12345|978-2-12345680-3|El Quijote|catedra
+
+            Ex. Out. si no existe. Record with bookId=12345
+does not exist
+            
+            
+        - del
+        - exit
+            finaliza el programa
+            debe de cerrar el fichero que contiene los registros de los libros
+
+            guardar el indice en disco duro
+
+            liberar los recursos solicitados
+
+        - printRec
+        - printInd
+        - printLst
+
+* dos ficheros
+    - fichero de datos almacenando los contenidos en binario de los libros
+    - fichero de indice
+    

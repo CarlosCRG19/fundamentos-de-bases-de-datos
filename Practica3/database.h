@@ -5,7 +5,8 @@
 #include "enums.h"
 
 typedef struct Database {
-    Book **books;
+    size_t size;
+    Book **records;
     char *filename;
     enum OrderingStrategy ordering_strategy;
 } Database;

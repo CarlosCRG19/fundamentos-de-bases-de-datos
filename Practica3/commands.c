@@ -48,7 +48,7 @@ void write_book_to_file(const char *filename, Book *book) {
  * @param add_command: 'add' command string containing book information
  * @param output_filename: Name of the database file
  */
-void add_book(const char *add_command, const char* output_filename) {
+void add_book(const char *add_command, Database *db) {
     Book new_book;
     char book_data[128];
 
@@ -71,7 +71,30 @@ void add_book(const char *add_command, const char* output_filename) {
     new_book.publisher = strdup(token);
 
     /* Write the new book to the database file */
-    write_book_to_file(output_filename, &new_book);
+    add_book2(db, &new_book);
+    /*write_book_to_file(output_filename, &new_book);*/
+}
+
+void addBook(Database *db, Book *new_book) {
+    // Create a new Book
+    if (new_book == NULL) {
+        printf("Failed to add book to the database. Memory allocation error.\n");
+        return;
+    }
+
+    // Resize the books array
+    db->records = (Book **)realloc(db->records, (db->size + 1) * sizeof(Book *));
+    
+    if (db->records == NULL) {
+        printf("Failed to add book to the database. Memory allocation error.\n");
+        // Roll back and free memory if an error occurs
+        /*FREE BOOK(new_book); */
+        return;
+    }
+
+    // Add the new book to the array
+    db->records[db->size] = new_book;
+    db->size++;
 }
 
 /**
