@@ -1,5 +1,7 @@
 #include "book_index.h"
 
+#include <string.h>
+
 BookIndex* BookIndex_new(int bookID, long int offset, size_t size) {
     BookIndex* book_index = (BookIndex*)malloc(sizeof(BookIndex));
 
@@ -27,6 +29,23 @@ void insert_at_end(BookIndexArray* array, BookIndex* index) {
     }
 
     array->indices[array->used++] = *index;
+}
+
+void insert_at(BookIndexArray *array, BookIndex *index, int position) {
+    if (position < 0 || position > array->used) {
+        return;
+    }
+
+    if (array->used == array->size) {
+        array->size *= 2;
+        array->indices = realloc(array->indices, array->size * sizeof(BookIndex));
+    }
+
+    // Make space for the new element by shifting elements to the right
+    memmove(&array->indices[position + 1], &array->indices[position], (array->used - position) * sizeof(BookIndex));
+
+    array->indices[position] = *index;
+    array->used++;
 }
 
 void free_array(BookIndexArray* array) {

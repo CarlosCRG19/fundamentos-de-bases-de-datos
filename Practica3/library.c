@@ -47,7 +47,6 @@ int main(int argc, char *argv[]) {
     /** Cycled function that controls user interaction **/
     loop(database);
 
-    save_index(database);
     /** TODO: Free database **/
 
     return 1; /** Return success code **/

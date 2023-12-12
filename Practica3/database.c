@@ -17,7 +17,7 @@ Database* Database_new(enum OrderingStrategy ordering_strategy, char *filename) 
     strcat(db->index_file, ".ind");
 
     db->ordering_strategy = ordering_strategy;
-    db->index_array = BookIndexArray_new(50);
+    db->index_array = load_index(db->index_file);
 
     return db;
 }
@@ -60,6 +60,11 @@ int add_book(Database* db, Book* new_book) {
         return 0;
     }
 
+    BookIndexPosition bp = find_book(db, new_book->bookID);
+    if (bp.book_index != NULL) {
+        return 0;
+    }
+
     BookIndex* new_index = write_book_to_disk(db, new_book);
 
     if (new_index == NULL) {
@@ -67,7 +72,7 @@ int add_book(Database* db, Book* new_book) {
         return 0;
     }
 
-    insert_at_end(db->index_array, new_index);
+    insert_at(db->index_array, new_index, bp.position);
 
     return 1; // return success
 }
@@ -154,20 +159,31 @@ Book* get_book(Database* db, BookIndex* book_index) {
     return NULL;
 }
 
-BookIndexArray* load_index(const char* filename) {
-    FILE* file = fopen(filename, "rb");
+BookIndexArray *load_index(const char *filename) {
+    FILE *file = fopen(filename, "rb");
 
     if (file == NULL) {
-        return BookIndexArray_new(0);  // Return an empty BookIndexArray
+        return BookIndexArray_new(10);  // Return an empty BookIndexArray
     }
 
-    // Allocate memory for BookIndexArray
-    BookIndexArray *index_array = BookIndexArray_new(10);  // Initial guess for size
-    BookIndex *current_index = (BookIndex*)malloc(sizeof(BookIndex));
+    BookIndexArray *index_array = BookIndexArray_new(10); 
 
-    // Read BookIndex data from the file until the end
-    while (fread(current_index, sizeof(BookIndex), 1, file) == 1) {
-        insert_at_end(index_array, current_index);
+    while (!feof(file)) {
+        BookIndex current_index;
+
+        if (fread(&current_index.bookID, sizeof(int), 1, file) != 1) {
+            break;  // Break on end of file
+        }
+
+        if (fread(&current_index.offset, sizeof(long int), 1, file) != 1) {
+            break;  // Break on end of file
+        }
+
+        if (fread(&current_index.size, sizeof(size_t), 1, file) != 1) {
+            break;  // Break on end of file
+        }
+
+        insert_at_end(index_array, &current_index);
     }
 
     fclose(file);

@@ -1,7 +1,7 @@
 #ifndef BOOK_H
 #define BOOK_H
 
-#include "stdlib.h"
+#include <stdlib.h>
 
 /* Struct to store book data */
 typedef struct {

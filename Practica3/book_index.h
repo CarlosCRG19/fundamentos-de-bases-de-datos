@@ -1,7 +1,7 @@
 #ifndef BOOK_INDEX_H
 #define BOOK_INDEX_H
 
-#include "stdlib.h"
+#include <stdlib.h>
 
 /* Index structure */
 typedef struct {
