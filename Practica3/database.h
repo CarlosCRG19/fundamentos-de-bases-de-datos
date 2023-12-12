@@ -19,7 +19,7 @@ typedef struct {
 
 Database* Database_new(enum OrderingStrategy ordering_strategy, char *filename);
 
-int add_book(Database* db, Book* new_book);
+enum ReturnStatus add_book(Database* db, Book* new_book);
 
 BookIndexPosition find_book(Database* db, int bookID);
 
@@ -27,6 +27,6 @@ Book* get_book(Database* db, BookIndex* book_index);
 
 BookIndexArray* load_index(const char* filename);
 
-void save_index(Database* db);
+enum ReturnStatus save_index(Database* db);
 
 #endif /* DATABASE_H */

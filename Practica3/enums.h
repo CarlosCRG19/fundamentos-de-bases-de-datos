@@ -8,4 +8,11 @@ enum OrderingStrategy {
     UNKNOWN_STRATEGY
 };
 
+enum ReturnStatus {
+    OK,
+    ERROR,
+    MEMORY_ERROR,
+    BOOK_ALREADY_EXISTS,
+};
+
 #endif /* ENUMS_H */

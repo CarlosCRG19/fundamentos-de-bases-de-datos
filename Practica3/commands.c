@@ -1,5 +1,6 @@
 #include "commands.h"
 #include "database.h"
+#include "enums.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,7 +20,6 @@ void add(Database* db, const char* add_command) {
     strcpy(book_data, add_command);
 
     /* Extract book content */
-
     char *token = strtok(book_data, "|");
     new_book.bookID = atoi(token);
 
@@ -33,11 +33,11 @@ void add(Database* db, const char* add_command) {
     new_book.publisher = strdup(token);
 
     /* Write the new book to the database file */
-    if (add_book(db, &new_book)) {
-        // handle success
+    enum ReturnStatus res = add_book(db, &new_book);
+    if (res == OK) {
         printf("Record with BookID=%d has been added to the database\n", new_book.bookID);
-    } else {
-        // handle error
+    } else if (res == BOOK_ALREADY_EXISTS){
+        printf("Record with BookID=%d exists.\n", new_book.bookID);
     }
 }
 

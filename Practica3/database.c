@@ -1,5 +1,7 @@
 #include "database.h"
 #include "book_index.h"
+#include "enums.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -54,27 +56,26 @@ BookIndex* write_book_to_disk(Database* db, Book* book) {
     }
 }
 
-int add_book(Database* db, Book* new_book) {
+enum ReturnStatus add_book(Database* db, Book* new_book) {
     if (new_book == NULL) {
         printf("Failed to add book to the database. Memory allocation error.\n");
-        return 0;
+        return MEMORY_ERROR;
     }
 
     BookIndexPosition bp = find_book(db, new_book->bookID);
     if (bp.book_index != NULL) {
-        return 0;
+        return BOOK_ALREADY_EXISTS;
     }
 
     BookIndex* new_index = write_book_to_disk(db, new_book);
-
     if (new_index == NULL) {
         printf("Error writing book to file.\n");
-        return 0;
+        return ERROR;
     }
 
     insert_at(db->index_array, new_index, bp.position);
 
-    return 1; // return success
+    return OK;
 }
 
 BookIndexPosition find_book(Database *db, int bookID) {
@@ -191,7 +192,7 @@ BookIndexArray *load_index(const char *filename) {
     return index_array;
 }
 
-void save_index(Database* db) {
+enum ReturnStatus save_index(Database* db) {
     BookIndexArray* index_array = db->index_array;
     FILE* file = fopen(db->index_file, "wb");
 
@@ -204,4 +205,5 @@ void save_index(Database* db) {
     }
 
     fclose(file);
+    return OK;
 }
