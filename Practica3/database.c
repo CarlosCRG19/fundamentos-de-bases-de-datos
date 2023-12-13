@@ -73,7 +73,7 @@ enum ReturnStatus add_book(Database* db, Book* new_book) {
         return ERROR;
     }
 
-    insert_at(db->index_array, new_index, bp.position);
+    insert_index_at(db->index_array, new_index, bp.position);
 
     return OK;
 }
@@ -184,7 +184,7 @@ BookIndexArray *load_index(const char *filename) {
             break;  // Break on end of file
         }
 
-        insert_at_end(index_array, &current_index);
+        insert_index_at_end(index_array, &current_index);
     }
 
     fclose(file);
