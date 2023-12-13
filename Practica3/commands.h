@@ -20,6 +20,8 @@ void printInd(Database* db);
 
 void printRec(Database* db);
 
+void printLst(Database* db);
+
 void print_book(Book *book);
 
 void print_records();

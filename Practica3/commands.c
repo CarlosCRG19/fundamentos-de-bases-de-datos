@@ -1,6 +1,6 @@
 #include "commands.h"
 #include "database.h"
-#include "enums.h"
+#include "constants.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,6 +65,16 @@ void printInd(Database* db) {
     }
 }
 
+void printLst(Database* db) {
+    DeletedBookArray* deleted_array = db->deleted_array;
+
+    for (size_t i = 0; i < deleted_array->used; ++i) {
+        printf("Entry #%lu\n", i);
+        printf("    offset: #%ld\n", deleted_array->books[i].offset);
+        printf("    size: #%ld\n", deleted_array->books[i].size);
+    }
+}
+
 void printRec(Database* db) {
     BookIndexArray* index_array = db->index_array;
 
@@ -84,9 +94,9 @@ void del(Database* db, const char* del_command) {
     /* Call database function to delete a book */
     enum ReturnStatus res = delete_book(db, bookID);
     if (res == OK) {
-        printf("Record with bookId=%d has been deleted\n", bookID);
+        printf("Record with BookID=%d has been deleted\n", bookID);
     } else if (res == BOOK_DOESNT_EXISTS){
-        printf("Record with bookId=%d does not exist\n", bookID);
+        printf("Item with key %d does not exist\n", bookID);
     } else {
         printf("lmaooo\n");
     }

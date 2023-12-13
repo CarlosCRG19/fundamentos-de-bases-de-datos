@@ -30,9 +30,15 @@ void process_command(const char *command, Database* database) {
         del(database, command);
         printf("exit\n");  /* Notify the user of command completion */
     } 
+    else if (strcmp(command, "printLst") == 0) {
+        /* Print information about the deleted books */
+        printLst(database);
+        printf("exit\n");  /* Notify the user of command completion */
+    } 
     else if (strcmp(command, "exit") == 0) {
         /* Inform the user that the program is done and will exit */
         save_index(database);
+        save_deleted(database);
         printf("all done\n");
     } 
     else {

@@ -1,14 +1,14 @@
 #include "database.h"
-#include "enums.h"
+#include "constants.h"
 #include "loop.h"
 
-enum OrderingStrategy to_ordering_stratregy(const char *strategy_str) {
+int to_ordering_stratregy(const char *strategy_str) {
     if (strcmp(strategy_str, "best_fit") == 0) {
-        return BEST_FIT;
+        return BESTFIT;
     } else if (strcmp(strategy_str, "worst_fit") == 0) {
-        return WORST_FIT;
+        return WORSTFIT;
     } else if (strcmp(strategy_str, "first_fit") == 0) {
-        return FIRST_FIT;
+        return FIRSTFIT;
     } else {
         return UNKNOWN_STRATEGY;
     }
@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
     char *ordering_strategy_str = argv[1];
     char *filename = argv[2];
 
-    enum OrderingStrategy ordering_strategy = to_ordering_stratregy(ordering_strategy_str);
+    int ordering_strategy = to_ordering_stratregy(ordering_strategy_str);
 
     if (ordering_strategy == UNKNOWN_STRATEGY) {
         printf("Unknown search strategy %s", ordering_strategy_str);
