@@ -3,6 +3,7 @@
 
 #include "book.h"
 #include "book_index.h"
+#include "deleted_book.h"
 #include "enums.h"
 
 typedef struct {
@@ -10,6 +11,7 @@ typedef struct {
     char* index_file;
     enum OrderingStrategy ordering_strategy;
     BookIndexArray* index_array;
+    DeletedBookArray* deleted_array;
 } Database;
 
 typedef struct {
@@ -28,5 +30,7 @@ Book* get_book(Database* db, BookIndex* book_index);
 BookIndexArray* load_index(const char* filename);
 
 enum ReturnStatus save_index(Database* db);
+
+enum ReturnStatus delete_book(Database* db, int bookID);
 
 #endif /* DATABASE_H */

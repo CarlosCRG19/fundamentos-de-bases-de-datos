@@ -48,6 +48,24 @@ void insert_index_at(BookIndexArray *array, BookIndex *index, int position) {
     array->used++;
 }
 
+void delete_index_at(BookIndexArray *array, int position) {
+    if (position < 0 || position >= array->used) {
+        return; // Invalid position
+    }
+
+    // Shift elements to the left to overwrite the element at the specified position
+    memmove(&array->indices[position], &array->indices[position + 1], (array->used - position - 1) * sizeof(BookIndex));
+
+    // Decrease the used count
+    array->used--;
+
+    // If the used count is significantly smaller than the array size, shrink the array
+    if (array->used > 0 && array->used < array->size / 2) {
+        array->size /= 2;
+        array->indices = realloc(array->indices, array->size * sizeof(BookIndex));
+    }
+}
+
 void free_index_array(BookIndexArray* array) {
     free(array->indices);
     array->indices = NULL;

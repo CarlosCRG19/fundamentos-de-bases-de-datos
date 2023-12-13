@@ -1,5 +1,6 @@
 #include "database.h"
 #include "book_index.h"
+#include "deleted_book.h"
 #include "enums.h"
 
 #include <stdlib.h>
@@ -20,6 +21,7 @@ Database* Database_new(enum OrderingStrategy ordering_strategy, char *filename) 
 
     db->ordering_strategy = ordering_strategy;
     db->index_array = load_index(db->index_file);
+    db->deleted_array = DeletedBookArray_new(10);
 
     return db;
 }
@@ -207,3 +209,50 @@ enum ReturnStatus save_index(Database* db) {
     fclose(file);
     return OK;
 }
+
+int find_deleted_position(Database *db, size_t size) {
+    size_t left = 0;
+    size_t right = db->deleted_array->used;
+    printf("array used: %zu\n", right);
+    size_t mid = left + (right - left) / 2;
+
+    while (left < right) {
+        if (db->deleted_array->books[mid].size == size) {
+            return mid;
+        } else if (db->deleted_array->books[mid].size < size) {
+            left = mid + 1;
+        } else {
+            printf("entre aqui 3\n");
+            right = mid;
+        }
+    }
+
+    return left;
+}
+
+enum ReturnStatus delete_book(Database* db, int bookID) {
+    if (bookID < 0) {
+        printf("Invalid bookID given %d.\n", bookID);
+        return ERROR;
+    }
+
+    BookIndexPosition bp = find_book(db, bookID);
+    if (bp.book_index == NULL) {
+        return BOOK_DOESNT_EXISTS;
+    }
+
+    DeletedBook* deleted_book = DeletedBook_new(bp.book_index->offset, bp.book_index->size);
+
+    int i;
+    for (i = 0; i < db->deleted_array->used; ++i) {
+        if (db->deleted_array->books[i].size < bp.book_index->size) {
+            break;
+        }
+    }
+
+    insert_deleted_at(db->deleted_array, deleted_book, i);
+    delete_index_at(db->index_array, bp.position);
+
+    return OK;
+}
+

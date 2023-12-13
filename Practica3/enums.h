@@ -13,6 +13,7 @@ enum ReturnStatus {
     ERROR,
     MEMORY_ERROR,
     BOOK_ALREADY_EXISTS,
+    BOOK_DOESNT_EXISTS,
 };
 
 #endif /* ENUMS_H */

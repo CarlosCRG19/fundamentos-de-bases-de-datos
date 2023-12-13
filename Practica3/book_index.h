@@ -26,6 +26,8 @@ void insert_index_at(BookIndexArray* array, BookIndex* index, int position);
 
 void insert_index_at_end(BookIndexArray* array, BookIndex* index);
 
+void delete_index_at(BookIndexArray *array, int position);
+
 void free_index_array(BookIndexArray* array);
 
 #endif /* BOOK_INDEX_H */

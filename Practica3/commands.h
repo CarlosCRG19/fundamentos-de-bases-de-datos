@@ -24,4 +24,6 @@ void print_book(Book *book);
 
 void print_records();
 
+void del(Database* db, const char* del_command);
+
 #endif /* COMMANDS_H */

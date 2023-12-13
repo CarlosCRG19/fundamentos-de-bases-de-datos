@@ -26,6 +26,10 @@ void process_command(const char *command, Database* database) {
         printRec(database);
         printf("exit\n");  /* Notify the user of command completion */
     } 
+    else if (strncmp(command, "del", 3) == 0) {
+        del(database, command);
+        printf("exit\n");  /* Notify the user of command completion */
+    } 
     else if (strcmp(command, "exit") == 0) {
         /* Inform the user that the program is done and will exit */
         save_index(database);

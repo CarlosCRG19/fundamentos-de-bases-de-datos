@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-DeletedBook* DeletedBook_new(int bookID, long int offset, size_t size) {
+DeletedBook* DeletedBook_new(long int offset, size_t size) {
     DeletedBook* deleted_book = (DeletedBook*)malloc(sizeof(DeletedBook));
 
     deleted_book->offset = offset;

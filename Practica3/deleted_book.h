@@ -17,7 +17,7 @@ typedef struct {
     size_t size;
 } DeletedBookArray;
 
-DeletedBook* DeletedBook_new(int bookID, long int offset, size_t size);
+DeletedBook* DeletedBook_new(long int offset, size_t size);
 
 DeletedBookArray* DeletedBookArray_new(size_t initial_size);
 

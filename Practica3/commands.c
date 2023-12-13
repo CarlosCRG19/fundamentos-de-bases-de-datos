@@ -77,3 +77,17 @@ void printRec(Database* db) {
 void print_book(Book *book) {
     printf("%d|%s|%s|%s\n", book->bookID, book->isbn, book->title, book->publisher);
 }
+
+void del(Database* db, const char* del_command) {
+    int bookID = atoi(del_command + 4);
+
+    /* Call database function to delete a book */
+    enum ReturnStatus res = delete_book(db, bookID);
+    if (res == OK) {
+        printf("Record with bookId=%d has been deleted\n", bookID);
+    } else if (res == BOOK_DOESNT_EXISTS){
+        printf("Record with bookId=%d does not exist\n", bookID);
+    } else {
+        printf("lmaooo\n");
+    }
+}
