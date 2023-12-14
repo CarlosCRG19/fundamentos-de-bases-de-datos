@@ -2,10 +2,12 @@
 #include "commands.h"
 
 /**
- * Process the user command.
- * @param command: User-entered command string
- * @param ordering_strategy: Selected book ordering strategy
- * @param filename: Name of the file storing book data
+ * Process the user command and perform corresponding actions in the database.
+ *
+ * @param command User-entered command string.
+ * @param database Pointer to the Database object.
+ *
+ * @return None
  */
 void process_command(const char *command, Database* database) {
     if (strncmp(command, "add", 3) == 0) {
@@ -47,9 +49,11 @@ void process_command(const char *command, Database* database) {
 }
 
 /**
- * Main loop for user interaction.
- * @param ordering_strategy: Selected book ordering strategy
- * @param filename: Name of the file storing book data
+ * Main loop for user interaction. Reads user commands and processes them until the 'exit' command is entered.
+ *
+ * @param database Pointer to the Database object.
+ *
+ * @return None
  */
 void loop(Database *database) {
     char command_buffer[100];

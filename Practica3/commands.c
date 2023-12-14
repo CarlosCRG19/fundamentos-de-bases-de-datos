@@ -7,9 +7,12 @@
 #include <string.h>
 
 /**
- * Add a book to the database using the information from the 'add' command.
- * @param add_command: 'add' command string containing book information
- * @param output_filename: Name of the database file
+ * Adds a book to the database using the information from the 'add' command.
+ *
+ * @param db The Database object.
+ * @param add_command The 'add' command string containing book information.
+ * 
+ * @return None
  */
 void add(Database* db, const char* add_command) {
     Book new_book;
@@ -41,6 +44,25 @@ void add(Database* db, const char* add_command) {
     }
 }
 
+/**
+ * Prints the details of a single book.
+ *
+ * @param book Pointer to the Book struct containing book information.
+ * 
+ * @return None
+ */
+void print_book(Book *book) {
+    printf("%d|%s|%s|%s\n", book->bookID, book->isbn, book->title, book->publisher);
+}
+
+/**
+ * Finds and prints information about a book in the database based on the 'find' command.
+ *
+ * @param db The Database object.
+ * @param find_command The 'find' command string containing bookID information.
+ * 
+ * @return None
+ */
 void find(Database* db, const char* find_command) {
     int bookID = atoi(find_command + 5);
     BookIndexPosition bp = find_book(db, bookID);
@@ -54,6 +76,13 @@ void find(Database* db, const char* find_command) {
     print_book(found_book);
 }
 
+/**
+ * Prints the information stored in the index array of the database.
+ *
+ * @param db The Database object.
+ * 
+ * @return None
+ */
 void printInd(Database* db) {
     BookIndexArray* index_array = db->index_array;
 
@@ -65,6 +94,13 @@ void printInd(Database* db) {
     }
 }
 
+/**
+ * Prints the information stored in the deleted array of the database.
+ *
+ * @param db The Database object.
+ * 
+ * @return None
+ */
 void printLst(Database* db) {
     DeletedBookArray* deleted_array = db->deleted_array;
 
@@ -75,6 +111,13 @@ void printLst(Database* db) {
     }
 }
 
+/**
+ * Prints the detailed information of all books in the database.
+ *
+ * @param db The Database object.
+ * 
+ * @return None
+ */
 void printRec(Database* db) {
     BookIndexArray* index_array = db->index_array;
 
@@ -84,10 +127,14 @@ void printRec(Database* db) {
     }
 }
 
-void print_book(Book *book) {
-    printf("%d|%s|%s|%s\n", book->bookID, book->isbn, book->title, book->publisher);
-}
-
+/**
+ * Deletes a book from the database based on the 'del' command.
+ *
+ * @param db The Database object.
+ * @param del_command The 'del' command string containing bookID information.
+ * 
+ * @return None
+ */
 void del(Database* db, const char* del_command) {
     int bookID = atoi(del_command + 4);
 

@@ -2,6 +2,13 @@
 #include "constants.h"
 #include "loop.h"
 
+/**
+ * Convert a string representation of a search strategy to its corresponding enum value.
+ *
+ * @param strategy_str The string representation of the search strategy.
+ *
+ * @return The enum value corresponding to the search strategy. If the strategy is unknown, returns UNKNOWN_STRATEGY.
+ */
 int to_ordering_stratregy(const char *strategy_str) {
     if (strcmp(strategy_str, "best_fit") == 0) {
         return BESTFIT;
@@ -15,11 +22,13 @@ int to_ordering_stratregy(const char *strategy_str) {
 }
 
 /**
- * Main function that accepts two command-line arguments:
- * @param argc: Number of command-line arguments
- * @param argv: Array of command-line argument strings
- * @return: Exit status
- **/
+ * Main function that initializes a database and enters a loop for user interaction.
+ *
+ * @param argc Number of command-line arguments.
+ * @param argv Array of command-line argument strings.
+ *
+ * @return Exit status. Returns 1 on success, 0 on incorrect arguments or unknown strategy.
+ */
 int main(int argc, char *argv[]) {
     /** Check if the correct number of arguments is provided **/
     if (argc != 3) {
@@ -47,7 +56,8 @@ int main(int argc, char *argv[]) {
     /** Cycled function that controls user interaction **/
     loop(database);
 
-    /** TODO: Free database **/
+    /** Free database **/
+    free_database(database);
 
     return 1; /** Return success code **/
 }

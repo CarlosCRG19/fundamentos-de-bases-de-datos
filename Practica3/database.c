@@ -7,6 +7,14 @@
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * Creates a new Database object with the given ordering strategy and filename.
+ *
+ * @param ordering_strategy The strategy for ordering books (BESTFIT or WORSTFIT).
+ * @param filename The base filename for the database files.
+ * 
+ * @return A pointer to the newly created Database object.
+ */
 Database* Database_new(int ordering_strategy, char *filename) {
     Database* db = (Database*)malloc(sizeof(Database));
 
@@ -30,9 +38,12 @@ Database* Database_new(int ordering_strategy, char *filename) {
 }
 
 /**
- * Write book information to a database file.
- * @param filename: Name of the database file
- * @param book: Pointer to the book struct containing book information
+ * Writes book information to a database file and returns the corresponding BookIndex.
+ *
+ * @param db The Database object.
+ * @param new_book Pointer to the Book struct containing book information.
+ * 
+ * @return A pointer to the newly created BookIndex or NULL on error.
  */
 BookIndex* write_book_to_disk(Database* db, Book* book) {
     /* Calculate the size needed to store book information */
@@ -61,6 +72,14 @@ BookIndex* write_book_to_disk(Database* db, Book* book) {
     }
 }
 
+/**
+ * Adds a new book to the database.
+ *
+ * @param db The Database object.
+ * @param new_book Pointer to the Book struct containing book information.
+ * 
+ * @return OK if successful, or an appropriate error code otherwise.
+ */
 enum ReturnStatus add_book(Database* db, Book* new_book) {
     if (new_book == NULL) {
         printf("Failed to add book to the database. Memory allocation error.\n");
@@ -83,6 +102,14 @@ enum ReturnStatus add_book(Database* db, Book* new_book) {
     return OK;
 }
 
+/**
+ * Finds the position of a book in the database index using binary search.
+ *
+ * @param db The Database object.
+ * @param bookID The ID of the book to find.
+ * 
+ * @return A BookIndexPosition struct indicating the position and book_index.
+ */
 BookIndexPosition find_book(Database *db, int bookID) {
     BookIndexPosition result = { -1, NULL };
 
@@ -110,6 +137,14 @@ BookIndexPosition find_book(Database *db, int bookID) {
     return result;
 }
 
+/**
+ * Retrieves a book from the database using the given BookIndex.
+ *
+ * @param db The Database object.
+ * @param book_index Pointer to the BookIndex struct.
+ * 
+ * @return A pointer to the retrieved Book or NULL on error.
+ */
 Book* get_book(Database* db, BookIndex* book_index) {
     FILE* file = fopen(db->data_file, "rb");
 
@@ -132,8 +167,8 @@ Book* get_book(Database* db, BookIndex* book_index) {
 
                 if (book != NULL) {
                     memcpy(&book->bookID, record_buffer, sizeof(int));
-                    // Free the buffer
                     memcpy(book->isbn, record_buffer + sizeof(int), sizeof(book->isbn));
+
                     // Use strtok to extract title and publisher
                     char *token = strtok(record_buffer + sizeof(int) + sizeof(book->isbn), "|");
                     book->title = strdup(token);
@@ -165,6 +200,13 @@ Book* get_book(Database* db, BookIndex* book_index) {
     return NULL;
 }
 
+/**
+ * Loads the book index from the specified file.
+ *
+ * @param filename The name of the index file.
+ * 
+ * @return A pointer to the loaded BookIndexArray.
+ */
 BookIndexArray* load_index(const char *filename) {
     FILE* file = fopen(filename, "rb");
 
@@ -197,6 +239,13 @@ BookIndexArray* load_index(const char *filename) {
     return index_array;
 }
 
+/**
+ * Saves the book index to the specified file.
+ *
+ * @param db The Database object.
+ * 
+ * @return OK if successful, or an appropriate error code otherwise.
+ */
 enum ReturnStatus save_index(Database* db) {
     BookIndexArray* index_array = db->index_array;
     FILE* file = fopen(db->index_file, "wb");
@@ -213,6 +262,14 @@ enum ReturnStatus save_index(Database* db) {
     return OK;
 }
 
+/**
+ * Finds the position to insert a deleted book based on its size using binary search.
+ *
+ * @param db The Database object.
+ * @param size The size of the deleted book.
+ * 
+ * @return The position to insert the deleted book.
+ */
 int find_deleted_position(Database *db, size_t size) {
     int left = 0;
     int right = db->deleted_array->used - 1;
@@ -239,6 +296,14 @@ int find_deleted_position(Database *db, size_t size) {
     return left; // This is the position where the deleted book should be inserted
 }
 
+/**
+ * Deletes a book from the database.
+ *
+ * @param db The Database object.
+ * @param bookID The ID of the book to delete.
+ * 
+ * @return OK if successful, or an appropriate error code otherwise.
+ */
 enum ReturnStatus delete_book(Database* db, int bookID) {
     if (bookID < 0) {
         printf("Invalid bookID given %d.\n", bookID);
@@ -258,6 +323,13 @@ enum ReturnStatus delete_book(Database* db, int bookID) {
     return OK;
 }
 
+/**
+ * Saves the deleted book information to the specified file.
+ *
+ * @param db The Database object.
+ * 
+ * @return OK if successful, or an appropriate error code otherwise.
+ */
 enum ReturnStatus save_deleted(Database* db) {
     DeletedBookArray* deleted_array = db->deleted_array;
     FILE* file = fopen(db->deleted_file, "wb");
@@ -275,6 +347,13 @@ enum ReturnStatus save_deleted(Database* db) {
     return OK;
 }
 
+/**
+ * Loads the deleted book information from the specified file.
+ *
+ * @param filename The name of the deleted book file.
+ * 
+ * @return A pointer to the loaded DeletedBookArray.
+ */
 DeletedBookArray *load_deleted(const char *filename) {
     FILE *file = fopen(filename, "rb");
 
@@ -304,3 +383,34 @@ DeletedBookArray *load_deleted(const char *filename) {
 
     return deleted_array;
 }
+
+/**
+ * Frees the memory allocated for a Database and its associated arrays.
+ *
+ * @param db The Database to be freed.
+ */
+void free_database(Database *db) {
+    if (db != NULL) {
+        // Free index array
+        if (db->index_array != NULL) {
+            free_index_array(db->index_array);
+            free(db->index_array);
+            db->index_array = NULL;
+        }
+
+        // Free deleted array
+        if (db->deleted_array != NULL) {
+            free_deleted_array(db->deleted_array);
+            db->deleted_array = NULL;
+        }
+
+        // Free filenames
+        free(db->data_file);
+        free(db->index_file);
+        free(db->deleted_file);
+
+        // Free the Database struct itself
+        free(db);
+    }
+}
+
