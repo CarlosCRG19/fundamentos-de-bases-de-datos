@@ -24,7 +24,7 @@ Database* Database_new(int ordering_strategy, char *filename) {
 
     db->ordering_strategy = ordering_strategy;
     db->index_array = load_index(db->index_file);
-    db->deleted_array = DeletedBookArray_new(10);
+    db->deleted_array = load_deleted(db->deleted_file);
 
     return db;
 }
@@ -165,8 +165,8 @@ Book* get_book(Database* db, BookIndex* book_index) {
     return NULL;
 }
 
-BookIndexArray *load_index(const char *filename) {
-    FILE *file = fopen(filename, "rb");
+BookIndexArray* load_index(const char *filename) {
+    FILE* file = fopen(filename, "rb");
 
     if (file == NULL) {
         return BookIndexArray_new(10);  // Return an empty BookIndexArray
@@ -273,4 +273,34 @@ enum ReturnStatus save_deleted(Database* db) {
 
     fclose(file);
     return OK;
+}
+
+DeletedBookArray *load_deleted(const char *filename) {
+    FILE *file = fopen(filename, "rb");
+
+    if (file == NULL) {
+        return DeletedBookArray_new(10);  // Return an empty DeletedBookArray
+    }
+
+    DeletedBookArray* deleted_array = DeletedBookArray_new(10); 
+
+    fseek(file, sizeof(int), SEEK_SET); // Ignore integer for ordering strategy
+
+    while (!feof(file)) {
+        DeletedBook deleted_book;
+
+        if (fread(&deleted_book.offset, sizeof(long int), 1, file) != 1) {
+            break;  // Break on end of file
+        }
+
+        if (fread(&deleted_book.size, sizeof(size_t), 1, file) != 1) {
+            break;  // Break on end of file
+        }
+
+        insert_deleted_at(deleted_array, &deleted_book, deleted_array->used);
+    }
+
+    fclose(file);
+
+    return deleted_array;
 }

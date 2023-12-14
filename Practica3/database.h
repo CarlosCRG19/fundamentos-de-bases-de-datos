@@ -36,4 +36,6 @@ enum ReturnStatus delete_book(Database* db, int bookID);
 
 enum ReturnStatus save_deleted(Database* db);
 
+DeletedBookArray *load_deleted(const char *filename);
+
 #endif /* DATABASE_H */
